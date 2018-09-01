@@ -1,0 +1,238 @@
+[
+["script.json.begin"],
+["[testname], [locking], [unlocking], [error], [debug]"],
+
+[
+    [
+        "numeric.OP_ADD",
+        "OP_ADD OP_16 OP_EQUAL",
+        "OP_1 OP_15",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "numeric.OP_ADD.error",
+        "OP_ADD OP_15 OP_EQUAL",
+        "OP_1 OP_15",
+        "vm.execute.opcode[false.stack.entry.at.end.of.script.execution].failed (errno 1300) (state TVM00)",
+        "true"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKSIG",
+        "OP_DUP OP_HASH160 OP_DATA_20 0x751e76e8199196d454941c45d1b3a323f1433bd6 OP_EQUALVERIFY OP_CHECKSIG",
+        "OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_33 0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKSIGVERIFY",
+        "OP_DUP OP_HASH160 OP_DATA_20 0x751e76e8199196d454941c45d1b3a323f1433bd6 OP_EQUALVERIFY OP_CHECKSIGVERIFY",
+        "OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_33 0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKSIG.signature.length.0",
+        "OP_DUP OP_HASH160 OP_DATA_20 0x751e76e8199196d454941c45d1b3a323f1433bd6 OP_EQUALVERIFY OP_CHECKSIG",
+        "OP_0 OP_DATA_33 0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",
+        "vm.execute.opcode[false.stack.entry.at.end.of.script.execution].failed (errno 1300) (state TVM00)",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKSIG.signature.verify.false",
+        "OP_DUP OP_HASH160 OP_DATA_20 0x06afd46bcdfd22ef94ac122aa11f241244a37ecc OP_EQUALVERIFY OP_CHECKSIG",
+        "OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_33 0x02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5",
+        "vm.execute.opcode[false.stack.entry.at.end.of.script.execution].failed (errno 1300) (state TVM00)",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKMULTISIG.01",
+        "OP_HASH160 OP_DATA_20 0x15fc0754e73eb85d1cbce08786fadb7320ecb8dc OP_EQUAL",
+        "OP_0 OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_71 0x30440220301073b1a2ab05dfad144cae5309b6745a91e9738dd8fcb71750e9d52f54d6d90220510776325896a6d45abe6cf490ade7b01f75dbc8aad07860c5e77f0a0b8763ec01 '52210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817982102c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee52102f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f953ae'",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKMULTISIG.02",
+        "OP_HASH160 OP_DATA_20 0x15fc0754e73eb85d1cbce08786fadb7320ecb8dc OP_EQUAL",
+        "OP_0 OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_71 0x3044022064d571f3ed4f47f11ad0a8543dea48b47513762bd00492a00e60562a7130ee990220286782a3b46de400e8d5bfee861e9ae17529f712e4154976832a361482fa6d3c01 '52210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817982102c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee52102f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f953ae'",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKMULTISIG.unorder.10",
+        "OP_HASH160 OP_DATA_20 0x15fc0754e73eb85d1cbce08786fadb7320ecb8dc OP_EQUAL",
+        "OP_0 OP_DATA_71 0x30440220301073b1a2ab05dfad144cae5309b6745a91e9738dd8fcb71750e9d52f54d6d90220510776325896a6d45abe6cf490ade7b01f75dbc8aad07860c5e77f0a0b8763ec01 OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 '52210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817982102c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee52102f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f953ae'",
+        "vm.execute.opcode[false.stack.entry.at.end.of.script.execution].failed (errno 1300) (state TVM00)",
+        "false"
+    ]
+],
+
+[
+    [
+        "crypto.OP_CHECKMULTISIGVERIFY.02",
+        "OP_HASH160 OP_DATA_20 0x35f753f6904f481f57add31d074615aad655ef64 OP_EQUAL",
+        "OP_0 OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_71 0x30440220301073b1a2ab05dfad144cae5309b6745a91e9738dd8fcb71750e9d52f54d6d90220510776325896a6d45abe6cf490ade7b01f75dbc8aad07860c5e77f0a0b8763ec01 '52210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817982102c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee52102f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f953af'",
+        "",
+        "false"
+    ]
+],
+
+
+[
+    [
+        "flowcontrol.OP_RETURN",
+        "OP_TRUE",
+        "OP_RETURN 'TokuBlock'",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "stack.OP_DUP",
+        "OP_DUP OP_EQUAL",
+        "OP_1",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "stack.OP_2DUP",
+        "OP_2DUP OP_ADD OP_ADD OP_ADD 6 OP_EQUAL",
+        "OP_1 OP_2",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "stack.OP_3DUP",
+        "OP_3DUP OP_ADD OP_ADD OP_ADD OP_ADD OP_ADD 12 OP_EQUALVERIFY",
+        "OP_1 OP_2 OP_3",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_IF",
+        "OP_IF OP_1 OP_2 OP_ADD OP_3 OP_EQUAL OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_ENDIF",
+        "OP_TRUE",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_IF.nested",
+        "OP_IF OP_TRUE OP_IF OP_2 OP_3 OP_ADD OP_5 OP_EQUAL OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_EQUAL OP_ENDIF OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_ENDIF",
+        "OP_FALSE",
+        "",
+        "true"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_IF.error",
+        "OP_IF OP_1 OP_2 OP_ADD OP_3 OP_EQUAL OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_ENDIF",
+        "'abc'",
+        "vm.execute.opcode[popIfBool.minimal.if.is.active.top.MUST.be.empty.or.0x01.instead:171].failed (errno 1300) (state TVM00)",
+        "false"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_ELSE",
+        "OP_IF OP_1 OP_2 OP_ADD OP_3 OP_EQUAL OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_EQUAL OP_ENDIF",
+        "OP_FALSE",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_ELSE.error",
+        "OP_1 OP_2 OP_ADD OP_3 OP_EQUAL OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_EQUAL OP_ENDIF",
+        "OP_FALSE",
+        "vm.execute.opcode[opElse.no.matching.opcode.to.begin.conditional.execution].failed (errno 1300) (state TVM00)",
+        "false"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_NOTIF",
+        "OP_NOTIF OP_1 OP_2 OP_ADD OP_3 OP_EQUAL OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_EQUAL OP_ENDIF",
+        "OP_FALSE",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "flowcontrol.OP_NOTIF.nested",
+        "OP_NOTIF OP_TRUE OP_NOTIF OP_1 OP_2 OP_ADD OP_3 OP_EQUAL OP_ENDIF OP_ELSE OP_2 OP_3 OP_ADD OP_5 OP_EQUAL OP_ENDIF",
+        "OP_TRUE",
+        "",
+        "false"
+    ]
+],
+
+[
+    [
+        "bitwise.OP_EQUAL.error",
+        "OP_EQUAL",
+        "OP_1",
+        "script.stack.index[0].invalid.for.stack.size[0] (errno 1110) (state TS000)",
+        "false"
+    ]
+],
+
+[
+    [
+        "bitwise.OP_EQUALVERIFY.error",
+        "OP_EQUALVERIFY",
+        "OP_1",
+        "script.stack.index[0].invalid.for.stack.size[0] (errno 1110) (state TS000)",
+        "false"
+    ]
+],
+
+
+["script.json.end"]
+]
