@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 	"github.com/tokublock/tokucore/xvm"
@@ -152,7 +153,7 @@ func (tx *Transaction) Hash() []byte {
 
 // ID -- returns transaction hex with reversed format.
 func (tx *Transaction) ID() string {
-	return NewTxIDToString(tx.Hash())
+	return xbase.NewIDToString(tx.Hash())
 }
 
 // Stats -- returns the builder stats.
@@ -222,7 +223,7 @@ func (tx *Transaction) Fill(idx uint32, signs []PubKeySign) error {
 // SignatureHash --
 // returns transaction hashm used to get signed/verified.
 func (tx *Transaction) SignatureHash(idx uint32, hashType byte) []byte {
-	buffer := xvm.NewBuffer()
+	buffer := xbase.NewBuffer()
 
 	// version
 	buffer.WriteU32(tx.version)
@@ -265,7 +266,7 @@ func (tx *Transaction) SignatureHash(idx uint32, hashType byte) []byte {
 // encode the tx to raw format.
 // https://en.bitcoin.it/wiki/Protocol_documentation#tx
 func (tx *Transaction) Serialize() []byte {
-	buffer := xvm.NewBuffer()
+	buffer := xbase.NewBuffer()
 
 	// version
 	buffer.WriteU32(tx.version)
@@ -293,7 +294,7 @@ func (tx *Transaction) Serialize() []byte {
 // Deserialize -- decode bytes to raw transaction struct.
 func (tx *Transaction) Deserialize(data []byte) error {
 	var err error
-	buffer := xvm.NewBufferReader(data)
+	buffer := xbase.NewBufferReader(data)
 
 	// Version.
 	if tx.version, err = buffer.ReadU32(); err != nil {
@@ -354,7 +355,7 @@ func (tx *Transaction) Deserialize(data []byte) error {
 
 // SerializeForPartially -- encode the tx to partially format, include PrevLockingScript and RedeemScript, SignIdx.
 func (tx *Transaction) SerializeForPartially(idx uint32) []byte {
-	buffer := xvm.NewBuffer()
+	buffer := xbase.NewBuffer()
 
 	// Header.
 	buffer.WriteVarBytes(tx.magic)
@@ -386,7 +387,7 @@ func (tx *Transaction) SerializeForPartially(idx uint32) []byte {
 // DeserializeForPartially -- decode bytes to transaction struct with PrevLockingScript and RedeemScript.
 func (tx *Transaction) DeserializeForPartially(data []byte) error {
 	var err error
-	buffer := xvm.NewBufferReader(data)
+	buffer := xbase.NewBufferReader(data)
 
 	// Header.
 	var magic []byte
@@ -475,7 +476,7 @@ func (tx *Transaction) ToString() string {
 	lines = append(lines, fmt.Sprintf("  \"inputs\":["))
 	for _, input := range tx.inputs {
 		lines = append(lines, "    {")
-		lines = append(lines, fmt.Sprintf("      \"hash\":\t\"%s\"", NewTxIDToString(input.Hash)))
+		lines = append(lines, fmt.Sprintf("      \"hash\":\t\"%s\"", xbase.NewIDToString(input.Hash)))
 		lines = append(lines, fmt.Sprintf("      \"n\":\t%d", input.Index))
 		lines = append(lines, fmt.Sprintf("      \"prevlocking\":\t\"%s\"", xvm.DisasmString(input.PrevLockingScript)))
 		if input.RedeemScript != nil {

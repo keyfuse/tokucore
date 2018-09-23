@@ -9,20 +9,21 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xerror"
 )
 
 // ScriptReader -- parsing custom script to parsed opcodes.
 type ScriptReader struct {
 	scriptLen int
-	buffer    *Buffer
+	buffer    *xbase.Buffer
 }
 
 // NewScriptReader -- creates new ScriptReader.
 func NewScriptReader(script []byte) *ScriptReader {
 	return &ScriptReader{
 		scriptLen: len(script),
-		buffer:    NewBufferReader(script),
+		buffer:    xbase.NewBufferReader(script),
 	}
 }
 

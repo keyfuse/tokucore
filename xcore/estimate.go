@@ -6,7 +6,7 @@
 package xcore
 
 import (
-	"github.com/tokublock/tokucore/xvm"
+	"github.com/tokublock/tokucore/xbase"
 )
 
 // EstimateSize --
@@ -43,12 +43,12 @@ func EstimateSize(txins []*TxIn, txouts []*TxOut) int64 {
 
 	// input size.
 	txinNums := len(txins)
-	size += int64(xvm.VarIntSerializeSize(uint64(txinNums)))
+	size += int64(xbase.VarIntSerializeSize(uint64(txinNums)))
 	size += int64(inputP2PKHSize * txinNums)
 
 	// output size.
 	txoutNums := len(txouts)
-	size += int64(xvm.VarIntSerializeSize(uint64(txoutNums)))
+	size += int64(xbase.VarIntSerializeSize(uint64(txoutNums)))
 	for _, txout := range txouts {
 		size += int64(8 + len(txout.Script))
 	}

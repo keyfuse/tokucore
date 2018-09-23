@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xvm
+package xbase
 
 import (
 	"fmt"
@@ -233,6 +233,20 @@ func (b *Buffer) ReadVarBytes() ([]byte, error) {
 		return nil, err
 	}
 	return b.ReadBytes(int(len))
+}
+
+// WriteVarString -- write variables length string to the buffer.
+func (b *Buffer) WriteVarString(v string) {
+	b.WriteVarBytes([]byte(v))
+}
+
+// ReadVarString -- read variable length string from the buffer.
+func (b *Buffer) ReadVarString() (string, error) {
+	data, err := b.ReadVarBytes()
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 // Bytes -- returns all the datas in the buffer.

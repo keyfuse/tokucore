@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xvm
+package xbase
 
 import (
 	"testing"
@@ -118,6 +118,9 @@ func TestBufferVarInt(t *testing.T) {
 		assert.Nil(t, err)
 		want := uint64(8)
 		assert.Equal(t, want, v)
+
+		size := VarIntSerializeSize(want)
+		assert.Equal(t, 1, size)
 	}
 
 	// >0xFD
@@ -126,6 +129,9 @@ func TestBufferVarInt(t *testing.T) {
 		assert.Nil(t, err)
 		want := uint64(0xFD + 1)
 		assert.Equal(t, want, v)
+
+		size := VarIntSerializeSize(want)
+		assert.Equal(t, 3, size)
 	}
 
 	// >uint16
@@ -134,6 +140,9 @@ func TestBufferVarInt(t *testing.T) {
 		assert.Nil(t, err)
 		want := uint64(0xFFFF + 1)
 		assert.Equal(t, want, v)
+
+		size := VarIntSerializeSize(want)
+		assert.Equal(t, 5, size)
 	}
 
 	// >uint32
@@ -142,6 +151,9 @@ func TestBufferVarInt(t *testing.T) {
 		assert.Nil(t, err)
 		want := uint64(0xFFFFFFFF + 1)
 		assert.Equal(t, want, v)
+
+		size := VarIntSerializeSize(want)
+		assert.Equal(t, 9, size)
 	}
 }
 
@@ -177,6 +189,22 @@ func TestBufferVarBytes(t *testing.T) {
 		want := []byte{0x03, 0x04}
 		assert.Equal(t, want, v)
 	}
+}
+
+func TestBufferVarString(t *testing.T) {
+	writer := NewBuffer()
+	writer.WriteVarString("xx")
+	writer.WriteBytes([]byte{0x01, 0x02})
+
+	datas := writer.Bytes()
+	reader := NewBufferReader(datas)
+
+	v, err := reader.ReadVarString()
+	assert.Nil(t, err)
+	assert.Equal(t, "xx", v)
+
+	remaing := reader.Remaining()
+	assert.Equal(t, []byte{0x01, 0x02}, remaing)
 }
 
 func BenchmarkBuffer(b *testing.B) {

@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 )
@@ -174,7 +175,7 @@ func (m *MicroPayee) CheckBond(refund *Transaction, bond *Transaction) error {
 
 	input := refund.Inputs()[0]
 	bondCoin := NewCoinBuilder().AddOutput(
-		NewTxIDToString(input.Hash),
+		xbase.NewIDToString(input.Hash),
 		0,
 		m.amount,
 		fmt.Sprintf("%x", input.PrevLockingScript),

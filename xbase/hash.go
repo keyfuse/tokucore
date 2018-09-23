@@ -3,14 +3,14 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcore
+package xbase
 
 import (
 	"encoding/hex"
 )
 
-// NewTxIDFromString -- returns byte-reverse hash bytes.
-func NewTxIDFromString(hashStr string) ([]byte, error) {
+// NewIDFromString -- returns byte-reverse hash bytes.
+func NewIDFromString(hashStr string) ([]byte, error) {
 	hash, err := hex.DecodeString(hashStr)
 	if err != nil {
 		return nil, err
@@ -23,8 +23,8 @@ func NewTxIDFromString(hashStr string) ([]byte, error) {
 	return hash, nil
 }
 
-// NewTxIDToString -- returns byte-reverse hash hex.
-func NewTxIDToString(hash []byte) string {
+// NewIDToString -- returns byte-reverse hash hex.
+func NewIDToString(hash []byte) string {
 	size := len(hash)
 	clone := make([]byte, size)
 	copy(clone, hash[:])

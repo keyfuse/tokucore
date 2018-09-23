@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tokublock/tokucore/xbase"
 )
 
 // https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
@@ -38,7 +39,7 @@ func TestTransactionRaw(t *testing.T) {
 
 	// Input.
 	for _, out := range outputs {
-		txhash, err := NewTxIDFromString(out.txid)
+		txhash, err := xbase.NewIDFromString(out.txid)
 		assert.Nil(t, err)
 		tx.AddInput(&TxIn{
 			Hash:     txhash,

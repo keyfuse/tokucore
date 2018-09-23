@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 )
@@ -177,7 +178,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 		// Merge the from.
 		for _, from := range froms {
 			// Hex to TxID.
-			txid, err := NewTxIDFromString(from.txID)
+			txid, err := xbase.NewIDFromString(from.txID)
 			if err != nil {
 				return nil, err
 			}
@@ -212,7 +213,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 		coin := vin.coin
 
 		// Hex to TxID.
-		txid, err := NewTxIDFromString(coin.txID)
+		txid, err := xbase.NewIDFromString(coin.txID)
 		if err != nil {
 			return nil, err
 		}

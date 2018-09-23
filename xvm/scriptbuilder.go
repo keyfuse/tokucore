@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"encoding/hex"
+	"github.com/tokublock/tokucore/xbase"
 )
 
 // ScriptBuilder -- for building custom scripts
@@ -25,14 +26,14 @@ import (
 // 	builder.AddOp(OP_CHECKMULTISIG)
 // 	script, err := builder.Script()
 type ScriptBuilder struct {
-	buffer *Buffer
+	buffer *xbase.Buffer
 	err    error
 }
 
 // NewScriptBuilder -- creates ScriptBuilder
 func NewScriptBuilder() *ScriptBuilder {
 	return &ScriptBuilder{
-		buffer: NewBuffer(),
+		buffer: xbase.NewBuffer(),
 	}
 }
 
