@@ -8,6 +8,8 @@ package xcore
 import (
 	"encoding/hex"
 	"testing"
+
+	"github.com/tokublock/tokucore/network"
 )
 
 // TestBIP0032Vectors tests the vectors provided by [BIP32] to ensure the
@@ -127,7 +129,7 @@ func TestBIP0032Vectors(t *testing.T) {
 			t.Errorf("err: %v", err)
 		}
 
-		privStr := extKey.ToString(MainNet)
+		privStr := extKey.ToString(network.MainNet)
 		if privStr != test.wantPriv {
 			t.Errorf("Serialize #%d (%s): mismatched serialized "+
 				"private extended key -- got: %s, want: %s", i,
@@ -136,7 +138,7 @@ func TestBIP0032Vectors(t *testing.T) {
 		}
 
 		pubKey := extKey.HDPublicKey()
-		pubStr := pubKey.ToString(MainNet)
+		pubStr := pubKey.ToString(network.MainNet)
 		if pubStr != test.wantPub {
 			t.Errorf("Neuter #%d (%s): mismatched serialized "+
 				"public extended key -- got: %s, want: %s", i,
@@ -264,7 +266,7 @@ tests:
 			}
 		}
 
-		privStr := extKey.ToString(MainNet)
+		privStr := extKey.ToString(network.MainNet)
 		if privStr != test.wantPriv {
 			t.Errorf("Child #%d (%s): mismatched serialized "+
 				"private extended key -- got: %s, want: %s", i,
@@ -376,7 +378,7 @@ func TestPublicDerivationByPath(t *testing.T) {
 			panic(err)
 		}
 
-		pubStr := extKey.ToString(MainNet)
+		pubStr := extKey.ToString(network.MainNet)
 		if pubStr != test.wantPub {
 			t.Errorf("Child #%d (%s): mismatched serialized "+
 				"public extended key -- got: %s, want: %s", i,

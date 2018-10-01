@@ -11,7 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/tokublock/tokucore/xbase/base58"
+	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 	"github.com/tokublock/tokucore/xvm"
@@ -22,7 +23,7 @@ func TestAddress(t *testing.T) {
 		name   string
 		hex    string
 		fn     func([]byte) Address
-		net    *NetworkParams
+		net    *network.Network
 		addr   string
 		script string
 		id     string
@@ -31,7 +32,7 @@ func TestAddress(t *testing.T) {
 			name:   "PayToPubKeyHashAddress.MainNet",
 			hex:    "f6889b21b5540353a29ed18c45ea0031280c42cf",
 			fn:     NewPayToPubKeyHashAddress,
-			net:    MainNet,
+			net:    network.MainNet,
 			addr:   "1PUYsjwfNmX64wS368ZR5FMouTtUmvtmTY",
 			script: "OP_DUP OP_HASH160 OP_DATA_20 f6889b21b5540353a29ed18c45ea0031280c42cf OP_EQUALVERIFY OP_CHECKSIG",
 			id:     "f6889b21b5540353a29ed18c45ea0031280c42cf",
@@ -40,7 +41,7 @@ func TestAddress(t *testing.T) {
 			name:   "PayToPubKeyHashAddress.TestNet",
 			hex:    "f6889b21b5540353a29ed18c45ea0031280c42cf",
 			fn:     NewPayToPubKeyHashAddress,
-			net:    TestNet,
+			net:    network.TestNet,
 			addr:   "n3zWAo2eBnxLr3ueohXnuAa8mTVBhxmPhq",
 			script: "OP_DUP OP_HASH160 OP_DATA_20 f6889b21b5540353a29ed18c45ea0031280c42cf OP_EQUALVERIFY OP_CHECKSIG",
 			id:     "f6889b21b5540353a29ed18c45ea0031280c42cf",
@@ -50,7 +51,7 @@ func TestAddress(t *testing.T) {
 			name:   "PayToScriptHashAddress.MainNet",
 			hex:    "f6889b21b5540353a29ed18c45ea0031280c42cf",
 			fn:     NewPayToScriptHashAddress,
-			net:    MainNet,
+			net:    network.MainNet,
 			addr:   "3QAZoHS6vfqUA78UDEE1Vsik3zBCLfybyE",
 			script: "OP_HASH160 OP_DATA_20 f6889b21b5540353a29ed18c45ea0031280c42cf OP_EQUAL",
 			id:     "f6889b21b5540353a29ed18c45ea0031280c42cf",
@@ -59,7 +60,7 @@ func TestAddress(t *testing.T) {
 			name:   "PayToScriptHashAddress.TestNet",
 			hex:    "f6889b21b5540353a29ed18c45ea0031280c42cf",
 			fn:     NewPayToScriptHashAddress,
-			net:    TestNet,
+			net:    network.TestNet,
 			addr:   "2NFims2N8Y8LpMtm1tMqt7pi1GLPN8pBgBc",
 			script: "OP_HASH160 OP_DATA_20 f6889b21b5540353a29ed18c45ea0031280c42cf OP_EQUAL",
 			id:     "f6889b21b5540353a29ed18c45ea0031280c42cf",
@@ -76,35 +77,35 @@ func TestAddress(t *testing.T) {
 
 func TestAddressDecode(t *testing.T) {
 	tests := []struct {
-		net  *NetworkParams
+		net  *network.Network
 		addr string
 		err  error
 	}{
 		{
-			net:  MainNet,
+			net:  network.MainNet,
 			addr: "1PUYsjwfNmX64wS368ZR5FMouTtUmvtmTY",
 			err:  nil,
 		},
 		{
-			net:  TestNet,
+			net:  network.TestNet,
 			addr: "n3zWAo2eBnxLr3ueohXnuAa8mTVBhxmPhq",
 			err:  nil,
 		},
 
 		{
-			net:  MainNet,
+			net:  network.MainNet,
 			addr: "3QAZoHS6vfqUA78UDEE1Vsik3zBCLfybyE",
 			err:  nil,
 		},
 		{
-			net:  TestNet,
+			net:  network.TestNet,
 			addr: "2NFims2N8Y8LpMtm1tMqt7pi1GLPN8pBgBc",
 			err:  nil,
 		},
 		{
-			net:  TestNet,
+			net:  network.TestNet,
 			addr: "2NFims2N8Y8LpMtm1tMqt7pi1GLPN8pBgBx",
-			err:  xerror.NewError(Errors, ER_ADDRESS_CHECKSUM_MISMATCH),
+			err:  xerror.NewError(Errors, ER_ADDRESS_FORMAT_MALFORMED, "2NFims2N8Y8LpMtm1tMqt7pi1GLPN8pBgBx"),
 		},
 	}
 
@@ -127,9 +128,9 @@ func TestAddressExdous(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		key, err := NewHDKeyRand()
 		assert.Nil(t, err)
-		t.Logf("priv:%v", key.ToString(TestNet))
+		t.Logf("priv:%v", key.ToString(network.TestNet))
 		addr := NewPayToPubKeyHashAddress(key.PublicKey().Hash160())
-		t.Logf("addr:%v", addr.ToString(TestNet))
+		t.Logf("addr:%v", addr.ToString(network.TestNet))
 	}
 }
 
@@ -145,8 +146,8 @@ func TestAddressP2PKHExample(t *testing.T) {
 		t.Logf("\tpubkey:%X, len:%v", uncompressed, len(uncompressed))
 		t.Logf("\thash:%X", hash)
 		addr := NewPayToPubKeyHashAddress(hash)
-		t.Logf("\taddress.testnet:%v", addr.ToString(TestNet))
-		t.Logf("\taddress.mainnet:%v", addr.ToString(MainNet))
+		t.Logf("\taddress.testnet:%v", addr.ToString(network.TestNet))
+		t.Logf("\taddress.mainnet:%v", addr.ToString(network.MainNet))
 	}
 
 	{
@@ -156,8 +157,8 @@ func TestAddressP2PKHExample(t *testing.T) {
 		t.Logf("\tpubkey:%X, len:%v", compressed, len(compressed))
 		t.Logf("\thash:%X", hash)
 		addr := NewPayToPubKeyHashAddress(hash)
-		t.Logf("\taddress.testnet:%v", addr.ToString(TestNet))
-		t.Logf("\taddress.mainnet:%v", addr.ToString(MainNet))
+		t.Logf("\taddress.testnet:%v", addr.ToString(network.TestNet))
+		t.Logf("\taddress.mainnet:%v", addr.ToString(network.MainNet))
 	}
 }
 
@@ -169,8 +170,8 @@ func TestAddressP2SHExample1(t *testing.T) {
 	assert.Nil(t, err)
 	t.Logf("p2sh.redeem.script:%v", xvm.DisasmString(redeemScript))
 	addr := multisig.GetAddress()
-	t.Logf("p2sh.address.testnte:%v", addr.ToString(TestNet))
-	t.Logf("p2sh.address.mainnet:%v", addr.ToString(MainNet))
+	t.Logf("p2sh.address.testnte:%v", addr.ToString(network.TestNet))
+	t.Logf("p2sh.address.mainnet:%v", addr.ToString(network.MainNet))
 }
 
 // Unstandard Script example
@@ -182,8 +183,8 @@ func TestAddressP2SHExample2(t *testing.T) {
 	hash := xcrypto.Hash160(redeemScript)
 	t.Logf("p2sh.redeem.script.hash:%X", hash)
 	addr := NewPayToScriptHashAddress(hash)
-	t.Logf("p2sh.address.testnte:%v", addr.ToString(TestNet))
-	t.Logf("p2sh.address.mainnet:%v", addr.ToString(MainNet))
+	t.Logf("p2sh.address.testnte:%v", addr.ToString(network.TestNet))
+	t.Logf("p2sh.address.mainnet:%v", addr.ToString(network.MainNet))
 }
 
 // Pay to:
@@ -207,14 +208,14 @@ func TestAddressP2SHExample3(t *testing.T) {
 	hash := xcrypto.Hash160(redeemScript)
 	t.Logf("p2sh.redeem.script.hash:%X", hash)
 	addr := NewPayToScriptHashAddress(hash)
-	t.Logf("p2sh.address.testnte:%v", addr.ToString(TestNet))
-	t.Logf("p2sh.address.mainnet:%v", addr.ToString(MainNet))
+	t.Logf("p2sh.address.testnte:%v", addr.ToString(network.TestNet))
+	t.Logf("p2sh.address.mainnet:%v", addr.ToString(network.MainNet))
 }
 
 // Vanity private key example.
 func TestAddressVanity(t *testing.T) {
 	base58Prv := "5JLUmjZiirgziDmWmNprPsNx8DYwfecUNk1FQXmDPaoKB36fX1o"
-	decoded, _, err := base58.CheckDecode(base58Prv)
+	decoded, _, err := xbase.Base58CheckDecode(base58Prv)
 	assert.Nil(t, err)
 	t.Logf("%X, len:%v", decoded, len(decoded))
 
@@ -223,5 +224,5 @@ func TestAddressVanity(t *testing.T) {
 	t.Logf("hash:%X", hash)
 	got := NewPayToPubKeyHashAddress(hash)
 	want := "1LoveRg5t2NCDLUZh6Q8ixv74M5YGVxXaN"
-	assert.Equal(t, want, got.ToString(MainNet))
+	assert.Equal(t, want, got.ToString(network.MainNet))
 }

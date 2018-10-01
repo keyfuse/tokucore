@@ -6,9 +6,12 @@
 package xcore
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 )
 
@@ -19,7 +22,7 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 	bohuHDKey := NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
 	bohu := bohuHDKey.GetAddress()
-	t.Logf("bohu.addr:%v", bohu.ToString(TestNet))
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
@@ -57,12 +60,58 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 	t.Logf("signed.tx:%x", signedTx)
 }
 
+func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
+	seed := []byte("this.is.bohu.seed.")
+	bohuHDKey := NewHDKey(seed)
+	bohuPrv := bohuHDKey.PrivateKey()
+	bohuPub := bohuPrv.PubKey()
+
+	// Uncompressed pubkey.
+	pubHash := xcrypto.Hash160(bohuPub.SerializeUncompressed())
+	script := NewPayToPubKeyHashScript(pubHash)
+	bohu := script.GetAddress()
+	locking, err := script.GetLockingScriptBytes()
+	assert.Nil(t, err)
+
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
+
+	// Satoshi.
+	seed = []byte("this.is.satoshi.seed.")
+	satoshiHDKey := NewHDKey(seed)
+	satoshi := satoshiHDKey.GetAddress()
+
+	// Prepare the UTXOs.
+	bohuCoin := NewCoinBuilder().AddOutput(
+		"5af1520f1d3e818fca695c2a903baa4a7eec4954f0b35aa01be1f2c1d2cfd802",
+		0,
+		129990000,
+		fmt.Sprintf("%x", locking),
+	).ToCoins()[0]
+
+	tx, err := NewTransactionBuilder().
+		AddCoins(bohuCoin).
+		AddKeys(bohuPrv).
+		To(satoshi, 666666).
+		SetPubKeyUncompressed().
+		Then().
+		SetChange(bohu).
+		SendFees(10000).
+		Then().
+		Sign().
+		BuildTransaction()
+	assert.Nil(t, err)
+
+	// Verify.
+	err = tx.Verify()
+	assert.Nil(t, err)
+}
+
 func TestTransactionBuilderMultisig(t *testing.T) {
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
 	bohu := bohuHDKey.GetAddress()
-	t.Logf("bohu.addr:%v", bohu.ToString(TestNet))
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
 
 	// A.
 	seed = []byte("this.is.a.seed.")
@@ -84,7 +133,7 @@ func TestTransactionBuilderMultisig(t *testing.T) {
 	// Redeem script.
 	redeemScript := NewPayToMultiSigScript(2, aPub, bPub, cPub)
 	multi := redeemScript.GetAddress()
-	t.Logf("multi.addr:%v", multi.ToString(TestNet))
+	t.Logf("multi.addr:%v", multi.ToString(network.TestNet))
 	redeem, _ := redeemScript.GetLockingScriptBytes()
 	t.Logf("redeem.hex:%x", redeem)
 

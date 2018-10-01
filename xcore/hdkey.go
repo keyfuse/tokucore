@@ -15,7 +15,8 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 
-	"github.com/tokublock/tokucore/xbase/base58"
+	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 )
@@ -247,7 +248,7 @@ func (k *HDKey) PrivateKey() *xcrypto.PrivateKey {
 }
 
 // ToString -- the HDkey as a human-readable base58-encoded string, WIF, 78bytes.
-func (k *HDKey) ToString(net *NetworkParams) string {
+func (k *HDKey) ToString(net *network.Network) string {
 	var keyBytes []byte
 	var version []byte
 
@@ -272,7 +273,7 @@ func (k *HDKey) ToString(net *NetworkParams) string {
 	data := buffer.Bytes()
 	checksum := xcrypto.DoubleSha256(data)[:4]
 	datas := append(data, checksum...)
-	return base58.Encode(datas)
+	return xbase.Base58Encode(datas)
 }
 
 // GetAddress -- returns the P2PKH address.
@@ -283,7 +284,7 @@ func (k *HDKey) GetAddress() Address {
 
 // NewHDKeyFromString -- import WIF string to HDKey.
 func NewHDKeyFromString(wif string) (*HDKey, error) {
-	data := base58.Decode(wif)
+	data := xbase.Base58Decode(wif)
 	if len(data) != (serializedKeyLen + 4) {
 		return nil, xerror.NewError(Errors, ER_HDKEY_SERIALIZED_KEY_WRONG_SIZE)
 	}

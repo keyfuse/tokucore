@@ -6,8 +6,10 @@
 package xcore
 
 import (
-	"github.com/tokublock/tokucore/xbase/base58"
+	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/tokublock/tokucore/xcrypto/ripemd160"
 	"github.com/tokublock/tokucore/xerror"
 )
 
@@ -18,18 +20,15 @@ import (
 // 3. pay-to-script-hash (P2SH)
 type Address interface {
 	// ToString returns the string of the address with base58 encoding.
-	ToString(net *NetworkParams) string
+	ToString(net *network.Network) string
 
 	Hash160() []byte
 }
 
 // DecodeAddress -- decode the string address and returns the Address with a known address type.
-func DecodeAddress(addr string, net *NetworkParams) (Address, error) {
-	decoded, netID, err := base58.CheckDecode(addr)
+func DecodeAddress(addr string, net *network.Network) (Address, error) {
+	decoded, netID, err := xbase.Base58CheckDecode(addr)
 	if err != nil {
-		if err == base58.ErrChecksum {
-			return nil, xerror.NewError(Errors, ER_ADDRESS_CHECKSUM_MISMATCH)
-		}
 		return nil, xerror.NewError(Errors, ER_ADDRESS_FORMAT_MALFORMED, addr)
 	}
 	switch len(decoded) {
@@ -57,20 +56,20 @@ type PayToPubKeyHashAddress struct {
 }
 
 // NewPayToPubKeyHashAddress -- creates a new PayToPubKeyHashAddress.
-func NewPayToPubKeyHashAddress(pubKeyHash []byte) Address {
+func NewPayToPubKeyHashAddress(hash160 []byte) Address {
 	return &PayToPubKeyHashAddress{
-		pubKeyHash: pubKeyHash,
+		pubKeyHash: hash160,
 	}
 }
 
 // ToString -- the implementation method for xcore.Address interface.
-func (a *PayToPubKeyHashAddress) ToString(net *NetworkParams) string {
-	return base58.CheckEncode(a.pubKeyHash, net.PubKeyHashAddrID)
+func (a *PayToPubKeyHashAddress) ToString(net *network.Network) string {
+	return xbase.Base58CheckEncode(a.pubKeyHash[:ripemd160.Size], net.PubKeyHashAddrID)
 }
 
 // Hash160 -- the address hash160 bytes.
 func (a *PayToPubKeyHashAddress) Hash160() []byte {
-	return a.pubKeyHash
+	return a.pubKeyHash[:ripemd160.Size]
 }
 
 // *******************************************
@@ -83,18 +82,18 @@ type PayToScriptHashAddress struct {
 }
 
 // NewPayToScriptHashAddress -- creates a new PayToScriptHashAddress.
-func NewPayToScriptHashAddress(scriptHash []byte) Address {
+func NewPayToScriptHashAddress(hash160 []byte) Address {
 	return &PayToScriptHashAddress{
-		scriptHash: scriptHash,
+		scriptHash: hash160,
 	}
 }
 
 // ToString -- the implementation method for xcore.Address interface.
-func (a *PayToScriptHashAddress) ToString(net *NetworkParams) string {
-	return base58.CheckEncode(a.scriptHash, net.ScriptHashAddrID)
+func (a *PayToScriptHashAddress) ToString(net *network.Network) string {
+	return xbase.Base58CheckEncode(a.scriptHash[:ripemd160.Size], net.ScriptHashAddrID)
 }
 
 // Hash160 -- returns the address hash160 bytes>
 func (a *PayToScriptHashAddress) Hash160() []byte {
-	return a.scriptHash
+	return a.scriptHash[:ripemd160.Size]
 }

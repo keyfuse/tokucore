@@ -11,11 +11,13 @@ test:
 	@$(MAKE) testxbase
 	@$(MAKE) testxcrypto
 	@$(MAKE) testxerror
+	@$(MAKE) testxprotocol
+	@$(MAKE) testnetwork
 	@$(MAKE) testxvm
 	@$(MAKE) testxcore
 
 testxbase:
-	go test -v -race ./xbase/...
+	go test -v -race ./xbase
 
 testxcrypto:
 	go test -v -race ./xcrypto
@@ -24,24 +26,24 @@ testxcrypto:
 testxerror:
 	go test -v -race ./xerror
 
+testxprotocol:
+	go test -v -race ./xprotocol
+
+testnetwork:
+	go test -v -race ./network
+
 testxvm:
 	go test -v -race ./xvm
 
 testxcore:
 	go test -v -race ./xcore
 
-testxnet:
-	go test -v -race ./xnet
-
-bench:
-	go test -run - -bench . ./...
-
-pkgs =	./xbase/...\
+pkgs =	./xbase\
 		./xcrypto\
 		./xerror\
-		./xnet\
+		./xprotocol\
+		./network\
 		./xvm\
-		./xnet\
 		./xcore
 
 fmt:

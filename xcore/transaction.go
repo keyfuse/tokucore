@@ -178,10 +178,19 @@ func (tx *Transaction) RawSignature(idx uint32, prv *xcrypto.PrivateKey) ([]byte
 	return append(signature, byte(tx.sigHashType)), nil
 }
 
-// SignIndex --
-// sign specified transaction input.
-// If keys more than 1, it will be a multisig.
+// SignIndex -- sign specified transaction input with compressed pubkey format.
 func (tx *Transaction) SignIndex(idx uint32, keys ...*xcrypto.PrivateKey) error {
+	return tx.signIndex(idx, true, keys)
+}
+
+// SignIndexUncompressed -- sign specified transaction input with uncompressed pubkey format.
+func (tx *Transaction) SignIndexUncompressed(idx uint32, keys ...*xcrypto.PrivateKey) error {
+	return tx.signIndex(idx, false, keys)
+}
+
+// signIndex -- sign specified transaction input.
+// If keys more than 1, it will be a multisig.
+func (tx *Transaction) signIndex(idx uint32, compressed bool, keys []*xcrypto.PrivateKey) error {
 	var signs []PubKeySign
 
 	// Sanity check.
@@ -195,8 +204,15 @@ func (tx *Transaction) SignIndex(idx uint32, keys ...*xcrypto.PrivateKey) error 
 		if err != nil {
 			return err
 		}
+
+		var pubkey []byte
+		if compressed {
+			pubkey = key.PubKey().SerializeCompressed()
+		} else {
+			pubkey = key.PubKey().SerializeUncompressed()
+		}
 		signs = append(signs, PubKeySign{
-			PubKey:    key.PubKey().Serialize(),
+			PubKey:    pubkey,
 			Signature: signature,
 		})
 	}

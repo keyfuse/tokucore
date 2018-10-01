@@ -37,6 +37,7 @@ type Group struct {
 	to           *Send
 	redeemScript []byte
 	stepin       bool
+	compressed   bool
 }
 
 // TransactionBuilder --
@@ -53,8 +54,8 @@ type TransactionBuilder struct {
 
 // NewTransactionBuilder -- creates new TransactionBuilder.
 func NewTransactionBuilder() *TransactionBuilder {
+	// Default all is 1000 satoshis.
 	return &TransactionBuilder{
-		// Default all is 1000 satoshis.
 		sendFees: 1000,
 		groups:   make([]Group, 1),
 	}
@@ -63,6 +64,7 @@ func NewTransactionBuilder() *TransactionBuilder {
 // AddCoins -- set the from coin.
 func (b *TransactionBuilder) AddCoins(coins ...*Coin) *TransactionBuilder {
 	b.groups[b.idx].stepin = true
+	b.groups[b.idx].compressed = true
 	b.groups[b.idx].coins = coins
 	return b
 }
@@ -88,6 +90,12 @@ func (b *TransactionBuilder) To(addr Address, value uint64) *TransactionBuilder 
 func (b *TransactionBuilder) SetRedeemScript(redeem []byte) *TransactionBuilder {
 	b.groups[b.idx].stepin = true
 	b.groups[b.idx].redeemScript = redeem
+	return b
+}
+
+// SetPubKeyUncompressed -- set the pubkey to uncompressed format.
+func (b *TransactionBuilder) SetPubKeyUncompressed() *TransactionBuilder {
+	b.groups[b.idx].compressed = false
 	return b
 }
 
@@ -138,6 +146,7 @@ func (b *TransactionBuilder) Then() *TransactionBuilder {
 type vin struct {
 	coin         *Coin
 	keys         []*xcrypto.PrivateKey
+	compressed   bool
 	redeemScript []byte
 }
 
@@ -187,6 +196,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 				vin := &vin{
 					coin:         from,
 					keys:         group.keys,
+					compressed:   group.compressed,
 					redeemScript: group.redeemScript,
 				}
 				vinmap[vkey] = vin
@@ -305,8 +315,14 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			if vin.keys == nil {
 				return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, i)
 			}
-			if err := transaction.SignIndex(uint32(i), vin.keys...); err != nil {
-				return nil, err
+			if vin.compressed {
+				if err := transaction.SignIndex(uint32(i), vin.keys...); err != nil {
+					return nil, err
+				}
+			} else {
+				if err := transaction.SignIndexUncompressed(uint32(i), vin.keys...); err != nil {
+					return nil, err
+				}
 			}
 		}
 	}

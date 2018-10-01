@@ -8,6 +8,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
 )
 
@@ -18,11 +19,12 @@ func assertNil(err error) {
 }
 
 func main() {
+	net := network.TestNet
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := xcore.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
 	bohu := bohuHDKey.GetAddress()
-	fmt.Printf("bohu.addr:%v", bohu.ToString(xcore.TestNet))
+	fmt.Printf("bohu.addr:%v", bohu.ToString(net))
 
 	// A.
 	seed = []byte("this.is.a.seed.")
@@ -44,7 +46,7 @@ func main() {
 	// Redeem script.
 	redeemScript := xcore.NewPayToMultiSigScript(2, aPub, bPub, cPub)
 	multi := redeemScript.GetAddress()
-	fmt.Printf("multi.addr:%v\n", multi.ToString(xcore.TestNet))
+	fmt.Printf("multi.addr:%v\n", multi.ToString(net))
 	redeem, _ := redeemScript.GetLockingScriptBytes()
 	fmt.Printf("redeem.hex:%x\n", redeem)
 
