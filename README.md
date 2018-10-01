@@ -4,7 +4,7 @@
 
 ## tokucore
 
-*tokucore* is a simple Go (golang) library for creating and manipulating bitcoin data structures like creating keys and addresses (HD/BIP32) or parsing, creating and signing transactions, micropayment.
+*tokucore* is a simple Go (golang) library for creating and manipulating bitcoin data structures like creating keys and addresses (HD/bip32) or parsing, creating and signing transactions, micropayment.
 
 ## Focus
 

@@ -138,7 +138,7 @@ func TestMultiSigScript(t *testing.T) {
 		script := NewPayToMultiSigScript(test.nrequired, test.keys...)
 		locking, err := script.GetLockingScriptBytes()
 		if err != nil {
-			assert.Equal(t, test.err, err)
+			assert.Equal(t, test.err.Error(), err.Error())
 		}
 		asm := xvm.DisasmString(locking)
 		if asm != test.expected {

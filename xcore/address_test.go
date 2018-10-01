@@ -119,7 +119,8 @@ func TestAddressDecode(t *testing.T) {
 			addr := address.ToString(test.net)
 			assert.Equal(t, test.addr, addr)
 		} else {
-			assert.Equal(t, test.err, err)
+			t.Logf("%+v", err)
+			assert.Equal(t, test.err.Error(), err.Error())
 		}
 	}
 }

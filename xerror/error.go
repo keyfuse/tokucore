@@ -8,6 +8,7 @@ package xerror
 import (
 	"bytes"
 	"fmt"
+	"io"
 )
 
 // Error -- the error structure returned from calling.
@@ -15,6 +16,7 @@ type Error struct {
 	Num     int
 	State   string
 	Message string
+	stack   *stack
 }
 
 // NewError -- creates new Error.
@@ -27,6 +29,7 @@ func NewError(table map[int]*Error, number int, args ...interface{}) *Error {
 	err.Num = errn.Num
 	err.State = errn.State
 	err.Message = fmt.Sprintf(errn.Message, args...)
+	err.stack = caller()
 	return err
 }
 
@@ -34,8 +37,23 @@ func NewError(table map[int]*Error, number int, args ...interface{}) *Error {
 func (e *Error) Error() string {
 	buf := &bytes.Buffer{}
 	buf.WriteString(e.Message)
-	fmt.Fprintf(buf, " (errno %d) (state %s)", e.Num, e.State)
+	buf.WriteString(fmt.Sprintf(" (errno %d) (state %s)", e.Num, e.State))
 	return buf.String()
+}
+
+// Format -- implements the error interface.
+func (e *Error) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			io.WriteString(s, e.Message)
+			io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)\n", e.Num, e.State))
+			io.WriteString(s, e.stack.trace())
+		} else {
+			io.WriteString(s, e.Message)
+			io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)", e.Num, e.State))
+		}
+	}
 }
 
 // Error type

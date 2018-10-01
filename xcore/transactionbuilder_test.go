@@ -425,7 +425,7 @@ func TestTransactionBuilderError(t *testing.T) {
 	}
 	for _, test := range tests {
 		err := test.fn()
-		assert.Equal(t, test.err, err)
+		assert.Equal(t, test.err.Error(), err.Error())
 	}
 }
 

@@ -15,6 +15,8 @@ func TestError(t *testing.T) {
 	err := NewError(Errors, ER_UNKNOWN)
 	eStr := err.Error()
 	assert.NotNil(t, eStr)
+	t.Logf("%+v", err)
+	t.Logf("%v", err)
 }
 
 func TestErrorNumber(t *testing.T) {
