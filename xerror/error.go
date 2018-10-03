@@ -21,16 +21,16 @@ type Error struct {
 
 // NewError -- creates new Error.
 func NewError(table map[int]*Error, number int, args ...interface{}) *Error {
-	err := &Error{}
 	errn, ok := table[number]
 	if !ok {
 		return Errors[ER_UNKNOWN]
 	}
-	err.Num = errn.Num
-	err.State = errn.State
-	err.Message = fmt.Sprintf(errn.Message, args...)
-	err.stack = caller()
-	return err
+	return &Error{
+		Num:     errn.Num,
+		State:   errn.State,
+		Message: fmt.Sprintf(errn.Message, args...),
+		stack:   caller(),
+	}
 }
 
 // Error -- implements the error interface.
@@ -45,13 +45,10 @@ func (e *Error) Error() string {
 func (e *Error) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
+		io.WriteString(s, e.Message)
+		io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)", e.Num, e.State))
 		if s.Flag('+') {
-			io.WriteString(s, e.Message)
-			io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)\n", e.Num, e.State))
-			io.WriteString(s, e.stack.trace())
-		} else {
-			io.WriteString(s, e.Message)
-			io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)", e.Num, e.State))
+			io.WriteString(s, "\n"+e.stack.trace())
 		}
 	}
 }
