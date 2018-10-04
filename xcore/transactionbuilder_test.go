@@ -422,6 +422,23 @@ func TestTransactionBuilderError(t *testing.T) {
 			},
 			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, 0),
 		},
+		{
+			name: "builder.fee.high",
+			fn: func() error {
+				_, err := NewTransactionBuilder().
+					AddCoins(aliceCoin).
+					To(satoshi, 1000).
+					Then().
+					SetChange(alice).
+					SetMaxFees(10).
+					SetRelayFeePerKb(1000).
+					Then().
+					Sign().
+					BuildTransaction()
+				return err
+			},
+			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FEE_TOO_HIGH, 188, 10),
+		},
 	}
 	for _, test := range tests {
 		err := test.fn()

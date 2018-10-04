@@ -33,6 +33,7 @@ const (
 	ER_TRANSACTION_BUILDER_SENDTO_EMPTY            int = 6104
 	ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY          int = 6105
 	ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH      int = 6106
+	ER_TRANSACTION_BUILDER_FEE_TOO_HIGH            int = 6107
 	ER_TRANSACTION_PARTIALLY_MAGIC_MISMATCH        int = 6201
 	ER_MICROPAYMENT_LOCKTIME_MISMATCH              int = 6301
 	ER_MICROPAYMENT_REFUND_BOND_MISMATCH           int = 6302
@@ -61,6 +62,7 @@ var Errors = map[int]*xerror.Error{
 	ER_TRANSACTION_BUILDER_SENDTO_EMPTY:            {Num: ER_TRANSACTION_BUILDER_SENDTO_EMPTY, State: "TTB00", Message: "transaction.builder.sendto.is.empty.at.group.idx[%v]"},
 	ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY:          {Num: ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, State: "TTB00", Message: "transaction.builder.sign.but.key.is.empty.at.input.idx[%v]"},
 	ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH:      {Num: ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH, State: "TTB00", Message: "transaction.builder.min.fee[%v].not.enough.from.change.value[%v]"},
+	ER_TRANSACTION_BUILDER_FEE_TOO_HIGH:            {Num: ER_TRANSACTION_BUILDER_FEE_TOO_HIGH, State: "TTB00", Message: "transaction.builder.fee[%v].too.high.than.max.fee[%v]"},
 	ER_TRANSACTION_PARTIALLY_MAGIC_MISMATCH:        {Num: ER_TRANSACTION_PARTIALLY_MAGIC_MISMATCH, State: "TTP00", Message: "transaction.partially.request.magic.mismatch.want[%x].got[%x]"},
 	ER_MICROPAYMENT_LOCKTIME_MISMATCH:              {Num: ER_MICROPAYMENT_LOCKTIME_MISMATCH, State: "TM000", Message: "micropayment.locktime.mismatch.want[%v].got[%v]"},
 	ER_MICROPAYMENT_REFUND_BOND_MISMATCH:           {Num: ER_MICROPAYMENT_REFUND_BOND_MISMATCH, State: "TM000", Message: "micropayment.refund.bond.mismatch"},

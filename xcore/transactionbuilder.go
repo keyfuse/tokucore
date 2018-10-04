@@ -46,6 +46,7 @@ type TransactionBuilder struct {
 	sign          bool
 	sendFees      int64
 	relayFeePerKb int64
+	maxFees       int64
 	lockTime      uint32
 	change        *Change
 	groups        []Group
@@ -57,6 +58,7 @@ func NewTransactionBuilder() *TransactionBuilder {
 	// Default all is 1000 satoshis.
 	return &TransactionBuilder{
 		sendFees: 1000,
+		maxFees:  Unit * 1,
 		groups:   make([]Group, 1),
 	}
 }
@@ -114,6 +116,13 @@ func (b *TransactionBuilder) SendFees(fees uint64) *TransactionBuilder {
 // SetRelayFeePerKb -- set the relay fee per Kb.
 func (b *TransactionBuilder) SetRelayFeePerKb(relayFeePerKb int64) *TransactionBuilder {
 	b.relayFeePerKb = relayFeePerKb
+	return b
+}
+
+// SetMaxFees -- set the max fee, the maxFees is non-zero after setting.
+// If the tx fees larger than the max, it returns error after the building.
+func (b *TransactionBuilder) SetMaxFees(max int64) *TransactionBuilder {
+	b.maxFees = max
 	return b
 }
 
@@ -263,6 +272,9 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 		estimateSize = EstimateSize(txins, txouts)
 		estimateFees = EstimateFees(estimateSize, b.relayFeePerKb)
 		fees = estimateFees
+	}
+	if fees > b.maxFees {
+		return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FEE_TOO_HIGH, fees, b.maxFees)
 	}
 
 	// Check amount.
