@@ -17,7 +17,6 @@ func assertNil(err error) {
 	}
 }
 
-// This demo show how to send bitcoin from Bohu to Satoshi with a transfer message.
 func main() {
 	msg, _ := xcore.DataOutput([]byte("666...satoshi"))
 
@@ -52,13 +51,7 @@ func main() {
 		BuildTransaction()
 	assertNil(err)
 
-	// Verify.
-	err = tx.Verify()
-	assertNil(err)
-
 	fmt.Printf("%v\n", tx.ToString())
-	fmt.Printf("tx.id:%s\n", tx.ID())
 	signedTx := tx.Serialize()
 	fmt.Printf("tx.hex:%x\n", signedTx)
-	// You can push the signed tx hex to https://testnet.blockchain.info/pushtx
 }

@@ -23,8 +23,14 @@ $ make test
 
 ## Examples
 
-- [P2PKH](examples/p2pkh.go)
-- [2-to-3 MultiSig](examples/multisig.go)
+- [Generate a Random Address](examples/address_rand.go)
+- [Generate a P2PKH Address](examples/address_p2pkh.go)
+- [Generate a P2SH Address](examples/address_p2sh.go)
+- [Generate a 2-of-3 P2SH MultiSig Address](examples/address_multisig.go)
+- [Create a P2PKH Transaction](examples/transaction_p2pkh.go)
+- [Create a 2-to-3 P2SH MultiSig Transaction](examples/transaction_multisig.go)
+- [Create a Transaction with an OP_RETURN Output](examples/transaction_opreturn.go)
+- [Create a Transaction with Verify](examples/transaction_p2pkh.go#L52)
 - [HDWallet](examples/hdwallet.go)
 - [MicroPayment](examples/micropayment.go)
 

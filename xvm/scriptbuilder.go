@@ -12,7 +12,9 @@ import (
 	"strings"
 
 	"encoding/hex"
+
 	"github.com/tokublock/tokucore/xbase"
+	"github.com/tokublock/tokucore/xcrypto"
 )
 
 // ScriptBuilder -- for building custom scripts
@@ -119,6 +121,11 @@ func (b *ScriptBuilder) Reset() *ScriptBuilder {
 // the script will be returned up the point of the first error along with the error.
 func (b *ScriptBuilder) Script() ([]byte, error) {
 	return b.buffer.Bytes(), b.err
+}
+
+// Hash160 -- returns the hash160 of the script bytes.
+func (b *ScriptBuilder) Hash160() ([]byte, error) {
+	return xcrypto.Hash160(b.buffer.Bytes()), b.err
 }
 
 // parseHex -- parse hex string into a []byte.

@@ -121,6 +121,8 @@ func TestScriptBuilderAddInt64(t *testing.T) {
 				test.expected)
 			panic(1)
 		}
+		_, err = builder.Hash160()
+		assert.Nil(t, err)
 	}
 }
 
