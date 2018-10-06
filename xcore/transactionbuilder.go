@@ -258,18 +258,16 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 		totalOut += int64(send.value)
 	}
 
-	// Build pushdata output.
-	{
-		for _, pushData := range b.pushDatas {
-			output := NewTxOut(0, pushData)
-			txouts = append(txouts, output)
-		}
-	}
-
 	// Estimate fee.
 	fees := b.sendFees
 	if b.relayFeePerKb > 0 {
-		estimateSize = EstimateSize(txins, txouts)
+		// Pushdata size.
+		pushDataSize := 0
+		for _, pushData := range b.pushDatas {
+			pushDataSize += len(pushData)
+		}
+
+		estimateSize = EstimateSize(txins, txouts) + int64(pushDataSize)
 		estimateFees = EstimateFees(estimateSize, b.relayFeePerKb)
 		fees = estimateFees
 	}
@@ -312,6 +310,9 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 	}
 	if changeTxOut != nil {
 		transaction.AddOutput(changeTxOut)
+	}
+	for _, pushData := range b.pushDatas {
+		transaction.AddOutput(NewTxOut(0, pushData))
 	}
 	transaction.stats.TotalIn = totalIn
 	transaction.stats.TotalOut = totalOut
