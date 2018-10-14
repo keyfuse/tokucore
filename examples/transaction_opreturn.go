@@ -17,8 +17,9 @@ func assertNil(err error) {
 	}
 }
 
+// Demo for OP_RETURN transaction.
 func main() {
-	msg, _ := xcore.DataOutput([]byte("666...satoshi"))
+	msg := []byte("666...satoshi")
 
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := xcore.NewHDKey(seed)
@@ -51,7 +52,7 @@ func main() {
 		BuildTransaction()
 	assertNil(err)
 
-	fmt.Printf("%v\n", tx.ToString())
-	signedTx := tx.Serialize()
-	fmt.Printf("tx.hex:%x\n", signedTx)
+	fmt.Printf("opreturn:%v\n", tx.ToString())
+	fmt.Printf("opreturn.txid:%x\n", tx.ID())
+	fmt.Printf("opreturn.tx:%x\n", tx.Serialize())
 }

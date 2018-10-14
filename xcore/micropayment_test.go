@@ -10,11 +10,12 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tokublock/tokucore/network"
 )
 
 func TestMicroPayment(t *testing.T) {
 	var fee uint64 = 0.00001 * Unit
-	var amount uint64 = 1 * Unit
+	var amount uint64 = 0.01 * Unit
 	var cupOfCoffee int = 0.0001 * Unit
 
 	var satoshiChannel *MicroPayer
@@ -23,9 +24,9 @@ func TestMicroPayment(t *testing.T) {
 	locktime := uint32(time.Now().Add(time.Hour).Unix())
 
 	satoshiCoin := NewCoinBuilder().AddOutput(
-		"1f6f5669fb742147c5fa5fbde99f8cb21c65e6ff09bf045bc7d934f357b8fe15",
+		"2b307391ccab9de7b91953cd488f35ddcd5bbc0c217cc0433009451a634d1db4",
 		0,
-		2*Unit,
+		14854725,
 		"76a9148b7f2212ecc4384abcf1df3fc5783e9c2a24d5a588ac",
 	).ToCoins()[0]
 
@@ -44,7 +45,10 @@ func TestMicroPayment(t *testing.T) {
 		starbucksPub := starbucksHDKey.PublicKey()
 
 		satoshiChannel = NewMicroPayer(satoshiPrv, starbucksPub, amount, fee, locktime)
+		t.Logf("satoshi.addr:%v", satoshiChannel.Address().ToString(network.TestNet))
+
 		starbucksChannel = NewMicroPayee(starbucksPrv, satoshiPub, amount, fee, locktime)
+		t.Logf("starbucks.addr:%v", starbucksChannel.Address().ToString(network.TestNet))
 	}
 
 	// Step#2. Channels handshake.

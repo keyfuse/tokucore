@@ -6,11 +6,26 @@
 package xvm
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tokublock/tokucore/xcrypto"
 )
+
+func readTests(testfile string) ([][]interface{}, error) {
+	file, err := ioutil.ReadFile(testfile)
+	if err != nil {
+		return nil, err
+	}
+
+	var tests [][]interface{}
+	if err := json.Unmarshal(file, &tests); err != nil {
+		return nil, err
+	}
+	return tests, nil
+}
 
 func TestEngine(t *testing.T) {
 	t.Parallel()

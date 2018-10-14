@@ -60,12 +60,6 @@ func TestTransactionRaw(t *testing.T) {
 
 	tx.SetLockTime(7)
 	tx.SetSigHashType(SigHashAll)
-	seria := tx.SerializeForPartially(2)
-
-	tx2 := NewTransaction()
-	err = tx2.DeserializeForPartially(seria)
-	assert.Nil(t, err)
-	assert.Equal(t, tx, tx2)
 }
 
 func TestTransactions(t *testing.T) {
@@ -83,6 +77,19 @@ func TestTransactions(t *testing.T) {
 		if !ok {
 			continue
 		}
+
+		// Witness.
+		witness, ok := test[2].(bool)
+		if !ok {
+			continue
+		}
+
+		// Name.
+		tName, ok := test[3].(string)
+		if !ok {
+			continue
+		}
+		t.Logf("%s", tName)
 
 		var txid string
 		var serializedTx []byte
@@ -110,7 +117,11 @@ func TestTransactions(t *testing.T) {
 		}
 
 		tx := NewTransaction()
-		err = tx.Deserialize(serializedTx)
+		if witness {
+			err = tx.Deserialize(serializedTx)
+		} else {
+			err = tx.DeserializeNoWitness(serializedTx)
+		}
 		assert.Nil(t, err)
 
 		for i, iinput := range inputs {
@@ -120,34 +131,36 @@ func TestTransactions(t *testing.T) {
 				continue
 			}
 
-			// Locking hex.
-			lockingHex, ok := input[1].(string)
+			// Amount.
+			amount, ok := input[1].(float64)
+			if !ok {
+				t.Errorf("bad.amount")
+				continue
+			}
+
+			// Locking.
+			lockingHex, ok := input[2].(string)
 			if !ok {
 				t.Errorf("bad.locking.hex")
 				continue
 			}
 			locking, err := hex.DecodeString(lockingHex)
 			assert.Nil(t, err)
-			tx.inputs[i].PrevLockingScript = locking
 
 			// Redeem hex.
-			redeemHex, ok := input[2].(string)
+			redeemHex, ok := input[3].(string)
 			if !ok {
 				t.Errorf("bad.redeem.hex")
 				continue
 			}
+			var redeem []byte
 			if redeemHex != "" {
-				redeem, err := hex.DecodeString(redeemHex)
+				redeem, err = hex.DecodeString(redeemHex)
 				assert.Nil(t, err)
-				tx.inputs[i].RedeemScript = redeem
 			}
+			tx.SetTxIn(i, uint64(amount), locking, redeem)
 		}
 
-		// Name.
-		tName, ok := test[2].(string)
-		if !ok {
-			continue
-		}
 		// Debug.
 		t.Logf("%v", tx.ToString())
 

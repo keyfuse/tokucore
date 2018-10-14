@@ -6,7 +6,6 @@
 package xcore
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -17,8 +16,15 @@ import (
 )
 
 const (
-	// HashSize -- array used to store hashes.
-	HashSize = 32
+	hashSize        = 32         // hashSize -- array used to store hashes.
+	witnessMarker   = byte(0x00) // Witness Marker fiedl, 0x00.
+	witnessFlag     = byte(0x01) // Witness Flag field, 0x01.
+	defaultSequence = 0xffffffff // Default sequence.
+
+	// witnessScaleFactor determines the level of "discount" witness data
+	// receives compared to "base" data. A scale factor of 4, denotes that
+	// witness data is 1/4 as cheap as regular non-witness data.
+	witnessScaleFactor = 4
 )
 
 // SigHashType -- hash type bits at the end of a signature.
@@ -32,26 +38,56 @@ const (
 	SigHashSingle       SigHashType = 0x3
 	SigTypeMask         SigHashType = 0x1f
 	SigHashAnyOneCanPay SigHashType = 0x80
+
+	// sigHashMask defines the number of bits of the hash type which is used
+	// to identify which outputs are signed.
+	sigHashMask = 0x1f
 )
 
 // TxIn -- the info of input transaction.
 type TxIn struct {
-	Hash              []byte // Previous Tx ID(Hash).
-	Index             uint32 // Previous tx output index.
-	Script            []byte // Unlocking script.
-	RedeemScript      []byte // Previous redeem script.
-	PrevLockingScript []byte // Previous tx output script(locking script).
+	Hash              []byte   // Previous Tx ID(Hash).
+	Index             uint32   // Previous tx output index.
+	Value             uint64   // Previous tx output amount.
+	Script            []byte   // The final unlocking script.
+	RedeemScript      []byte   // Previous redeem script.
+	PrevLockingScript []byte   // Previous tx output script(locking script).
+	Witness           [][]byte // Witness script.
+	HasWitness        bool     // Whether the input is witness.
+	WitnessScriptCode []byte   // Witness rework locking script code.
+	SignatureHash     []byte   // Signature hash of the input.
 	Sequence          uint32
 }
 
 // NewTxIn -- build a TxIn.
-func NewTxIn(txHash []byte, n uint32, script []byte, redeemScript []byte) *TxIn {
+func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript []byte) *TxIn {
+	var hasWitness bool
+	var witnessScriptCode []byte
+
+	// If the locking script is a witness, we should build the witness script code for signature hash.
+	switch GetScriptClass(script) {
+	case WitnessV0PubKeyHashTy:
+		instrs, err := xvm.NewScriptReader(script).AllInstructions()
+		if err != nil {
+			return nil
+		}
+		p2pkh := NewPayToPubKeyHashScript(instrs[1].Data())
+		script, err := p2pkh.GetLockingScriptBytes()
+		if err != nil {
+			return nil
+		}
+		witnessScriptCode = script
+		hasWitness = true
+	}
 	return &TxIn{
 		Hash:              txHash,
 		Index:             n,
+		Value:             value,
 		PrevLockingScript: script,
 		RedeemScript:      redeemScript,
-		Sequence:          0xffffffff,
+		WitnessScriptCode: witnessScriptCode,
+		HasWitness:        hasWitness,
+		Sequence:          defaultSequence,
 	}
 }
 
@@ -69,27 +105,17 @@ func NewTxOut(value uint64, script []byte) *TxOut {
 	}
 }
 
-// TransactionStat -- transaction stats from builder.
-type TransactionStat struct {
-	TotalIn      int64
-	TotalOut     int64
-	Change       int64
-	Fees         int64
-	FeesPerKb    int64
-	EstimateFees int64
-	EstimateSize int64
-}
-
 // Transaction -- the bitcoin transaction.
 type Transaction struct {
-	signIdx     uint32
-	version     uint32
-	lockTime    uint32
-	magic       []byte
-	inputs      []*TxIn
-	outputs     []*TxOut
-	sigHashType SigHashType
-	stats       TransactionStat
+	signIdx      int
+	version      uint32
+	lockTime     uint32
+	inputs       []*TxIn
+	outputs      []*TxOut
+	sigHashType  SigHashType
+	hashPrevouts []byte
+	hashSequence []byte
+	hashOutputs  []byte
 }
 
 // NewTransaction -- creates a new Transaction.
@@ -97,7 +123,6 @@ func NewTransaction() *Transaction {
 	return &Transaction{
 		version:     1,
 		sigHashType: SigHashAll,
-		magic:       []byte{0x00, 0x01},
 	}
 }
 
@@ -116,13 +141,31 @@ func (tx *Transaction) SetLockTime(time uint32) {
 	tx.lockTime = time
 }
 
+// SetTxIn -- set the txin tuples.
+// Used for deserialize the transaction and verify.
+func (tx *Transaction) SetTxIn(idx int, amount uint64, locking []byte, redeem []byte) {
+	tx.inputs[idx].Value = amount
+	tx.inputs[idx].PrevLockingScript = locking
+	tx.inputs[idx].RedeemScript = redeem
+
+	// If the locking script is a witness, we should build the witness script code for signature hash.
+	switch GetScriptClass(locking) {
+	case WitnessV0PubKeyHashTy:
+		instrs, _ := xvm.NewScriptReader(locking).AllInstructions()
+		p2pkh := NewPayToPubKeyHashScript(instrs[1].Data())
+		script, _ := p2pkh.GetLockingScriptBytes()
+		tx.inputs[idx].WitnessScriptCode = script
+		tx.inputs[idx].HasWitness = true
+	}
+}
+
 // LockTime -- returns tx locktime.
 func (tx *Transaction) LockTime() uint32 {
 	return tx.lockTime
 }
 
 // SignIdx -- returns tx signIdx.
-func (tx *Transaction) SignIdx() uint32 {
+func (tx *Transaction) SignIdx() int {
 	return tx.signIdx
 }
 
@@ -148,7 +191,7 @@ func (tx *Transaction) Inputs() []*TxIn {
 
 // Hash -- returns the tx hash.
 func (tx *Transaction) Hash() []byte {
-	return xcrypto.DoubleSha256(tx.Serialize())
+	return xcrypto.DoubleSha256(tx.SerializeNoWitness())
 }
 
 // ID -- returns transaction hex with reversed format.
@@ -156,115 +199,124 @@ func (tx *Transaction) ID() string {
 	return xbase.NewIDToString(tx.Hash())
 }
 
-// Stats -- returns the builder stats.
-func (tx *Transaction) Stats() TransactionStat {
-	return tx.stats
+// WitnessHash -- returns the tx withess format hash.
+func (tx *Transaction) WitnessHash() []byte {
+	return xcrypto.DoubleSha256(tx.Serialize())
 }
 
-// RawSignature -- sign the idx input and return the signature.
-func (tx *Transaction) RawSignature(idx uint32, prv *xcrypto.PrivateKey) ([]byte, error) {
-	// Sanity Check
-	inputs := uint32(len(tx.inputs))
-	if idx >= inputs {
-		return nil, xerror.NewError(Errors, ER_TRANSACTION_SIGN_OUT_INDEX, idx, inputs)
-	}
-
-	// Signature hash.
-	signatureHash := tx.SignatureHash(idx, byte(SigHashAll))
-	signature, err := xcrypto.Sign(signatureHash, prv)
-	if err != nil {
-		return nil, err
-	}
-	return append(signature, byte(tx.sigHashType)), nil
+// WitnessID -- returns transaction hex with reversed format.
+func (tx *Transaction) WitnessID() string {
+	return xbase.NewIDToString(tx.WitnessHash())
 }
 
-// SignIndex -- sign specified transaction input with compressed pubkey format.
-func (tx *Transaction) SignIndex(idx uint32, keys ...*xcrypto.PrivateKey) error {
-	return tx.signIndex(idx, true, keys)
-}
-
-// SignIndexUncompressed -- sign specified transaction input with uncompressed pubkey format.
-func (tx *Transaction) SignIndexUncompressed(idx uint32, keys ...*xcrypto.PrivateKey) error {
-	return tx.signIndex(idx, false, keys)
-}
-
-// signIndex -- sign specified transaction input.
-// If keys more than 1, it will be a multisig.
-func (tx *Transaction) signIndex(idx uint32, compressed bool, keys []*xcrypto.PrivateKey) error {
-	var signs []PubKeySign
+// SignIndex -- sign specified transaction input with pubkey format.
+func (tx *Transaction) SignIndex(idx int, compressed bool, keys ...*xcrypto.PrivateKey) error {
+	txIn := tx.inputs[idx]
+	signs := make([]PubKeySign, 0)
 
 	// Sanity check.
-	redeemScript := tx.inputs[idx].RedeemScript
-	if len(keys) > 1 && redeemScript == nil {
+	if len(keys) > 1 && txIn.RedeemScript == nil {
 		return xerror.NewError(Errors, ER_TRANSACTION_SIGN_REDEEM_EMPTY, idx, len(keys))
 	}
 
 	for _, key := range keys {
-		signature, err := tx.RawSignature(idx, key)
-		if err != nil {
-			return err
-		}
-
+		var err error
 		var pubkey []byte
+		var signature []byte
+
+		// Pubkey.
 		if compressed {
 			pubkey = key.PubKey().SerializeCompressed()
 		} else {
 			pubkey = key.PubKey().SerializeUncompressed()
+		}
+
+		if txIn.HasWitness {
+			if signature, err = tx.WitnessSignature(idx, key); err != nil {
+				return err
+			}
+		} else {
+			if signature, err = tx.RawSignature(idx, key); err != nil {
+				return err
+			}
 		}
 		signs = append(signs, PubKeySign{
 			PubKey:    pubkey,
 			Signature: signature,
 		})
 	}
-	return tx.Fill(idx, signs)
+	return tx.EmbedIdxSignature(idx, signs)
 }
 
-// Fill -- set the unlocking of the idx input.
-func (tx *Transaction) Fill(idx uint32, signs []PubKeySign) error {
+// EmbedIdxSignature -- build the unlocking with signs for the idx.
+func (tx *Transaction) EmbedIdxSignature(idx int, signs []PubKeySign) error {
+	txIn := tx.inputs[idx]
+
 	// Sanity check.
-	redeemScript := tx.inputs[idx].RedeemScript
-	if len(signs) > 1 && redeemScript == nil {
+	if len(signs) > 1 && txIn.RedeemScript == nil {
 		return xerror.NewError(Errors, ER_TRANSACTION_SIGN_REDEEM_EMPTY, idx, len(signs))
 	}
 
-	locking := tx.inputs[idx].PrevLockingScript
-	unlocking, err := BuildUnlockingScriptBytes(locking, redeemScript, signs)
-	if err != nil {
-		return err
+	builder := xvm.NewScriptBuilder()
+	class := GetScriptClass(txIn.PrevLockingScript)
+	switch class {
+	case PubKeyHashTy:
+		// unlocking: <sig> <pubkey>
+		// witness:   (empty)
+		unlocking, err := builder.AddData(signs[0].Signature).AddData(signs[0].PubKey).Script()
+		if err != nil {
+			return err
+		}
+		txIn.Script = unlocking
+	case ScriptHashTy:
+		// unlocking: OP_0 <A sig> <C sig> <redeemScript>
+		// witness:   (empty)
+		if len(signs) > 0 {
+			builder.AddOp(xvm.OP_0)
+		}
+		for _, sign := range signs {
+			builder.AddData(sign.Signature)
+		}
+		unlocking, err := builder.AddData(txIn.RedeemScript).Script()
+		if err != nil {
+			return err
+		}
+		txIn.Script = unlocking
+	case WitnessV0PubKeyHashTy:
+		// unlocking: (empty)
+		// witness:   [<sig>] [<pubkey>]
+		txIn.Witness = append(txIn.Witness, signs[0].Signature)
+		txIn.Witness = append(txIn.Witness, signs[0].PubKey)
+		txIn.Script = nil
+	default:
+		return xerror.NewError(Errors, ER_SCRIPT_TYPE_UNKNOWN, xvm.DisasmString(txIn.PrevLockingScript))
 	}
-	tx.inputs[idx].Script = unlocking
 	return nil
 }
 
-// SignatureHash --
-// returns transaction hashm used to get signed/verified.
-func (tx *Transaction) SignatureHash(idx uint32, hashType byte) []byte {
+// RawSignatureHash -- returns transaction hash used to get signed/verified.
+func (tx *Transaction) RawSignatureHash(idx int, hashType SigHashType) []byte {
 	buffer := xbase.NewBuffer()
 
 	// version
 	buffer.WriteU32(tx.version)
-	switch SigHashType(hashType) {
+	switch hashType {
 	case SigHashAll:
-		// inputs.
 		buffer.WriteVarInt(uint64(len(tx.inputs)))
 		for i, in := range tx.inputs {
 			buffer.WriteBytes(in.Hash)
 			buffer.WriteU32(in.Index)
-			if i == int(idx) {
+			if i == idx {
 				if in.RedeemScript != nil {
 					buffer.WriteVarBytes(in.RedeemScript)
 				} else {
-					script, err := xvm.RemoveOpcode(in.PrevLockingScript, byte(xvm.OP_CODESEPARATOR))
-					if err != nil {
-						panic(err)
-					}
+					script := xvm.RemoveOpcode(in.PrevLockingScript, byte(xvm.OP_CODESEPARATOR))
 					buffer.WriteVarBytes(script)
 				}
 			}
 			buffer.WriteU32(in.Sequence)
 		}
 
-		// outputs.
 		buffer.WriteVarInt(uint64(len(tx.outputs)))
 		for _, out := range tx.outputs {
 			buffer.WriteU64(out.Value)
@@ -278,10 +330,261 @@ func (tx *Transaction) SignatureHash(idx uint32, hashType byte) []byte {
 	return xcrypto.DoubleSha256(buffer.Bytes())
 }
 
-// Serialize --
-// encode the tx to raw format.
-// https://en.bitcoin.it/wiki/Protocol_documentation#tx
+// WitnessSignatureHash -- returns transaction hash used to get signed/verified.
+func (tx *Transaction) WitnessSignatureHash(idx int, hashType SigHashType) []byte {
+	var zeroHash [32]byte
+	txIn := tx.inputs[idx]
+
+	// hashPrevouts.
+	// If anyone can pay isn't active, then we can use the cached
+	// hashPrevOuts, otherwise we just write zeroes for the prev outs.
+	if (hashType & SigHashAnyOneCanPay) == 0 {
+		if tx.hashPrevouts == nil {
+			hashBuffer := xbase.NewBuffer()
+			for _, in := range tx.inputs {
+				hashBuffer.WriteBytes(in.Hash[:])
+				hashBuffer.WriteU32(in.Index)
+			}
+			tx.hashPrevouts = xcrypto.DoubleSha256(hashBuffer.Bytes())
+		}
+	} else {
+		tx.hashPrevouts = zeroHash[:]
+	}
+
+	// If the sighash isn't anyone can pay, single, or none, the use the
+	// cached hash sequences, otherwise write all zeroes for the
+	// hashSequence.
+	if (hashType&SigHashAnyOneCanPay) == 0 && (hashType&sigHashMask) != SigHashSingle && (hashType&sigHashMask) != SigHashNone {
+		if tx.hashSequence == nil {
+			hashBuffer := xbase.NewBuffer()
+			for _, in := range tx.inputs {
+				hashBuffer.WriteU32(in.Sequence)
+			}
+			tx.hashSequence = xcrypto.DoubleSha256(hashBuffer.Bytes())
+		}
+	} else {
+		tx.hashSequence = zeroHash[:]
+	}
+
+	// If the current signature mode isn't single, or none, then we can
+	// re-use the pre-generated hashoutputs sighash fragment. Otherwise,
+	// we'll serialize and add only the target output index to the signature
+	// pre-image.
+	if hashType&SigHashSingle != SigHashSingle && hashType&SigHashNone != SigHashNone {
+		if tx.hashOutputs == nil {
+			hashBuffer := xbase.NewBuffer()
+			for _, out := range tx.outputs {
+				hashBuffer.WriteU64(out.Value)
+				hashBuffer.WriteVarBytes(out.Script)
+			}
+			tx.hashOutputs = xcrypto.DoubleSha256(hashBuffer.Bytes())
+		}
+	} else {
+		tx.hashOutputs = zeroHash[:]
+	}
+
+	buffer := xbase.NewBuffer()
+	buffer.WriteU32(tx.version)
+	buffer.WriteBytes(tx.hashPrevouts)
+	buffer.WriteBytes(tx.hashSequence)
+	buffer.WriteBytes(txIn.Hash)
+	buffer.WriteU32(txIn.Index)
+	buffer.WriteVarBytes(txIn.WitnessScriptCode)
+	buffer.WriteU64(txIn.Value)
+	buffer.WriteU32(txIn.Sequence)
+	buffer.WriteBytes(tx.hashOutputs)
+	buffer.WriteU32(tx.lockTime)
+	buffer.WriteU32(uint32(hashType))
+	return xcrypto.DoubleSha256(buffer.Bytes())
+}
+
+// RawSignature -- sign the idx input and return the signature.
+func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrivateKey) ([]byte, error) {
+	// Sanity Check
+	inputs := len(tx.inputs)
+	if idx >= inputs {
+		return nil, xerror.NewError(Errors, ER_TRANSACTION_SIGN_OUT_INDEX, idx, inputs)
+	}
+
+	txIn := tx.inputs[idx]
+	txIn.SignatureHash = tx.RawSignatureHash(idx, SigHashAll)
+	signature, err := xcrypto.Sign(txIn.SignatureHash, prv)
+	if err != nil {
+		return nil, err
+	}
+	return append(signature, byte(tx.sigHashType)), nil
+}
+
+// WitnessSignature -- sign the idx input and return the witness signature.
+func (tx *Transaction) WitnessSignature(idx int, prv *xcrypto.PrivateKey) ([]byte, error) {
+	// Sanity Check
+	inputs := len(tx.inputs)
+	if idx >= inputs {
+		return nil, xerror.NewError(Errors, ER_TRANSACTION_SIGN_OUT_INDEX, idx, inputs)
+	}
+
+	txIn := tx.inputs[idx]
+	txIn.SignatureHash = tx.WitnessSignatureHash(idx, SigHashAll)
+	signature, err := xcrypto.Sign(txIn.SignatureHash, prv)
+	if err != nil {
+		return nil, err
+	}
+	return append(signature, byte(tx.sigHashType)), nil
+}
+
+// HasWitness -- returns whether the inputs contain witness datas.
+func (tx *Transaction) HasWitness() bool {
+	for _, in := range tx.inputs {
+		if in.HasWitness {
+			return true
+		}
+	}
+	return false
+}
+
+// Serialize -- the new witness serialization defined in BIP0141 and BIP0144.
 func (tx *Transaction) Serialize() []byte {
+	buffer := xbase.NewBuffer()
+	hasWitness := tx.HasWitness()
+
+	// version
+	buffer.WriteU32(tx.version)
+
+	// Witness marker.
+	if hasWitness {
+		buffer.WriteU8(witnessMarker)
+		buffer.WriteU8(witnessFlag)
+	}
+
+	// inputs
+	buffer.WriteVarInt(uint64(len(tx.inputs)))
+	for _, in := range tx.inputs {
+		buffer.WriteBytes(in.Hash)
+		buffer.WriteU32(in.Index)
+		buffer.WriteVarBytes(in.Script)
+		buffer.WriteU32(in.Sequence)
+	}
+
+	// outputs
+	buffer.WriteVarInt(uint64(len(tx.outputs)))
+	for _, out := range tx.outputs {
+		buffer.WriteU64(out.Value)
+		buffer.WriteVarBytes(out.Script)
+	}
+
+	if hasWitness {
+		for _, in := range tx.inputs {
+			wits := in.Witness
+			buffer.WriteVarInt(uint64(len(wits)))
+			for _, wit := range wits {
+				buffer.WriteVarBytes(wit)
+			}
+		}
+	}
+
+	// Lock time
+	buffer.WriteU32(tx.lockTime)
+	return buffer.Bytes()
+}
+
+// Deserialize -- decode bytes to witness transaction struct.
+func (tx *Transaction) Deserialize(data []byte) error {
+	var err error
+	buffer := xbase.NewBufferReader(data)
+
+	// Version.
+	if tx.version, err = buffer.ReadU32(); err != nil {
+		return err
+	}
+
+	var marker byte
+	if marker, err = buffer.ReadU8(); err != nil {
+		return err
+	}
+	if marker != witnessMarker {
+		return fmt.Errorf("witness.marker.error.want:%x.got:%x", witnessMarker, marker)
+	}
+
+	var flag byte
+	if flag, err = buffer.ReadU8(); err != nil {
+		return err
+	}
+	if flag != witnessFlag {
+		return fmt.Errorf("witness.flag.error.want:%x.got:%x", witnessFlag, flag)
+	}
+
+	// Inputs.
+	var ins uint64
+	if ins, err = buffer.ReadVarInt(); err != nil {
+		return err
+	}
+	if ins > 0 {
+		tx.inputs = make([]*TxIn, ins)
+		for i := 0; i < int(ins); i++ {
+			txIn := &TxIn{}
+			if txIn.Hash, err = buffer.ReadBytes(hashSize); err != nil {
+				return err
+			}
+			if txIn.Index, err = buffer.ReadU32(); err != nil {
+				return err
+			}
+			if txIn.Script, err = buffer.ReadVarBytes(); err != nil {
+				return err
+			}
+			if txIn.Sequence, err = buffer.ReadU32(); err != nil {
+				return err
+			}
+			tx.inputs[i] = txIn
+		}
+	}
+
+	// Outputs.
+	var outs uint64
+	if outs, err = buffer.ReadVarInt(); err != nil {
+		return err
+	}
+	if outs > 0 {
+		tx.outputs = make([]*TxOut, outs)
+		for i := 0; i < int(outs); i++ {
+			txOut := &TxOut{}
+			if txOut.Value, err = buffer.ReadU64(); err != nil {
+				return err
+			}
+			if txOut.Script, err = buffer.ReadVarBytes(); err != nil {
+				return err
+			}
+			tx.outputs[i] = txOut
+		}
+	}
+
+	// If the transaction's flag byte isn't 0x00 at this point, then one or
+	// more of its inputs has accompanying witness data.
+	if flag != 0x00 {
+		for _, in := range tx.inputs {
+			witCount, err := buffer.ReadVarInt()
+			if err != nil {
+				return err
+			}
+
+			in.Witness = make([][]byte, witCount)
+			for j := uint64(0); j < witCount; j++ {
+				if in.Witness[j], err = buffer.ReadVarBytes(); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	// Lock time.
+	if tx.lockTime, err = buffer.ReadU32(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// SerializeNoWitness -- normal serialization.
+// https://en.bitcoin.it/wiki/Protocol_documentation#tx
+func (tx *Transaction) SerializeNoWitness() []byte {
 	buffer := xbase.NewBuffer()
 
 	// version
@@ -302,13 +605,14 @@ func (tx *Transaction) Serialize() []byte {
 		buffer.WriteU64(out.Value)
 		buffer.WriteVarBytes(out.Script)
 	}
+
 	// Lock time
 	buffer.WriteU32(tx.lockTime)
 	return buffer.Bytes()
 }
 
-// Deserialize -- decode bytes to raw transaction struct.
-func (tx *Transaction) Deserialize(data []byte) error {
+// DeserializeNoWitness -- decode bytes to raw transaction struct.
+func (tx *Transaction) DeserializeNoWitness(data []byte) error {
 	var err error
 	buffer := xbase.NewBufferReader(data)
 
@@ -326,7 +630,7 @@ func (tx *Transaction) Deserialize(data []byte) error {
 		tx.inputs = make([]*TxIn, ins)
 		for i := 0; i < int(ins); i++ {
 			txIn := &TxIn{}
-			if txIn.Hash, err = buffer.ReadBytes(HashSize); err != nil {
+			if txIn.Hash, err = buffer.ReadBytes(hashSize); err != nil {
 				return err
 			}
 			if txIn.Index, err = buffer.ReadU32(); err != nil {
@@ -366,163 +670,22 @@ func (tx *Transaction) Deserialize(data []byte) error {
 		return err
 	}
 	return nil
-
-}
-
-// SerializeForPartially -- encode the tx to partially format, include PrevLockingScript and RedeemScript, SignIdx.
-func (tx *Transaction) SerializeForPartially(idx uint32) []byte {
-	buffer := xbase.NewBuffer()
-
-	// Header.
-	buffer.WriteVarBytes(tx.magic)
-	buffer.WriteU32(idx)
-	buffer.WriteU32(tx.version)
-
-	// inputs
-	buffer.WriteVarInt(uint64(len(tx.inputs)))
-	for _, in := range tx.inputs {
-		buffer.WriteBytes(in.Hash)
-		buffer.WriteU32(in.Index)
-		buffer.WriteVarBytes(in.PrevLockingScript)
-		buffer.WriteVarBytes(in.RedeemScript)
-		buffer.WriteU32(in.Sequence)
-	}
-
-	// outputs
-	buffer.WriteVarInt(uint64(len(tx.outputs)))
-	for _, out := range tx.outputs {
-		buffer.WriteU64(out.Value)
-		buffer.WriteVarBytes(out.Script)
-	}
-	// Lock time
-	buffer.WriteU32(tx.lockTime)
-	tx.signIdx = idx
-	return buffer.Bytes()
-}
-
-// DeserializeForPartially -- decode bytes to transaction struct with PrevLockingScript and RedeemScript.
-func (tx *Transaction) DeserializeForPartially(data []byte) error {
-	var err error
-	buffer := xbase.NewBufferReader(data)
-
-	// Header.
-	var magic []byte
-	if magic, err = buffer.ReadVarBytes(); err != nil {
-		return err
-	}
-	if !bytes.Equal(tx.magic, magic) {
-		return xerror.NewError(Errors, ER_TRANSACTION_PARTIALLY_MAGIC_MISMATCH, tx.magic, magic)
-	}
-	if tx.signIdx, err = buffer.ReadU32(); err != nil {
-		return err
-	}
-	if tx.version, err = buffer.ReadU32(); err != nil {
-		return err
-	}
-
-	// Inputs.
-	var ins uint64
-	if ins, err = buffer.ReadVarInt(); err != nil {
-		return err
-	}
-	if ins > 0 {
-		tx.inputs = make([]*TxIn, ins)
-		for i := 0; i < int(ins); i++ {
-			txIn := &TxIn{}
-			if txIn.Hash, err = buffer.ReadBytes(HashSize); err != nil {
-				return err
-			}
-			if txIn.Index, err = buffer.ReadU32(); err != nil {
-				return err
-			}
-			if txIn.PrevLockingScript, err = buffer.ReadVarBytes(); err != nil {
-				return err
-			}
-			if txIn.RedeemScript, err = buffer.ReadVarBytes(); err != nil {
-				return err
-			}
-			if txIn.Sequence, err = buffer.ReadU32(); err != nil {
-				return err
-			}
-			tx.inputs[i] = txIn
-		}
-	}
-
-	// Outputs.
-	var outs uint64
-	if outs, err = buffer.ReadVarInt(); err != nil {
-		return err
-	}
-	if outs > 0 {
-		tx.outputs = make([]*TxOut, outs)
-		for i := 0; i < int(outs); i++ {
-			txOut := &TxOut{}
-			if txOut.Value, err = buffer.ReadU64(); err != nil {
-				return err
-			}
-			if txOut.Script, err = buffer.ReadVarBytes(); err != nil {
-				return err
-			}
-			tx.outputs[i] = txOut
-		}
-	}
-
-	// Lock time.
-	if tx.lockTime, err = buffer.ReadU32(); err != nil {
-		return err
-	}
-	return nil
 }
 
 // Verify -- verify the transaction with signature and pubkey.
 func (tx *Transaction) Verify() error {
-	return tx.verify(false)
-}
-
-// VerifyDebug -- verify the transaction with signature and pubkey.
-func (tx *Transaction) VerifyDebug() error {
-	return tx.verify(true)
-}
-
-// ToString -- returns a human-readable representation of a transaction.
-func (tx *Transaction) ToString() string {
-	var lines []string
-
-	lines = append(lines, "\n{")
-	lines = append(lines, fmt.Sprintf("  \"inputs\":["))
-	for _, input := range tx.inputs {
-		lines = append(lines, "    {")
-		lines = append(lines, fmt.Sprintf("      \"hash\":\t\"%s\"", xbase.NewIDToString(input.Hash)))
-		lines = append(lines, fmt.Sprintf("      \"n\":\t%d", input.Index))
-		lines = append(lines, fmt.Sprintf("      \"prevlocking\":\t\"%s\"", xvm.DisasmString(input.PrevLockingScript)))
-		if input.RedeemScript != nil {
-			lines = append(lines, fmt.Sprintf("      \"redeemscript\":\t\"%s\"", xvm.DisasmString(input.RedeemScript)))
-			lines = append(lines, fmt.Sprintf("      \"redeemhex\":\t\"%x\"", input.RedeemScript))
-		}
-		lines = append(lines, fmt.Sprintf("      \"script\":\t\"%s\"", xvm.DisasmString(input.Script)))
-		lines = append(lines, "    }")
-	}
-	lines = append(lines, fmt.Sprintf("  ],"))
-
-	lines = append(lines, fmt.Sprintf("  \"outputs\":["))
-	for _, output := range tx.outputs {
-		lines = append(lines, "    {")
-		lines = append(lines, fmt.Sprintf("      \"value\":\t%d", output.Value))
-		lines = append(lines, fmt.Sprintf("      \"script\":\t\"%s\"", xvm.DisasmString(output.Script)))
-		lines = append(lines, "    }")
-	}
-	lines = append(lines, fmt.Sprintf("  ]"))
-	lines = append(lines, "}\n")
-	return strings.Join(lines, "\n")
-}
-
-func (tx *Transaction) verify(debug bool) error {
 	for i, in := range tx.inputs {
 		engine := xvm.NewEngine()
 
 		// Hasher function.
 		hasherFn := func(hashType byte) []byte {
-			return tx.SignatureHash(uint32(i), hashType)
+			var sighash []byte
+			if in.HasWitness {
+				sighash = tx.WitnessSignatureHash(i, SigHashType(hashType))
+			} else {
+				sighash = tx.RawSignatureHash(i, SigHashType(hashType))
+			}
+			return sighash
 		}
 		engine.SetHasher(hasherFn)
 
@@ -537,16 +700,166 @@ func (tx *Transaction) verify(debug bool) error {
 		}
 		engine.SetVerifier(verifierFn)
 
-		if debug {
-			engine.EnableDebug()
+		// Locking & Unlocking.
+		var locking []byte
+		var unlocking []byte
+		if in.HasWitness {
+			builder := xvm.NewScriptBuilder()
+			script, err := builder.AddData(in.Witness[0]).AddData(in.Witness[1]).Script()
+			if err != nil {
+				return err
+			}
+			locking = in.WitnessScriptCode
+			unlocking = script
+		} else {
+			locking = in.PrevLockingScript
+			unlocking = in.Script
 		}
-		err := engine.Verify(in.Script, in.PrevLockingScript)
-		if debug {
-			engine.PrintTrace()
-		}
+
+		// Verify.
+		err := engine.Verify(unlocking, locking)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// BaseSize -- the size of the transaction serialised with the witness data stripped.
+// https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+func (tx *Transaction) BaseSize() int {
+	size := 0
+
+	// version
+	size += 4
+
+	// inputs
+	size += xbase.VarIntSerializeSize(uint64(len(tx.inputs)))
+	for _, in := range tx.inputs {
+		size += len(in.Hash)
+		size += 4
+		size += xbase.VarIntSerializeSize(uint64(len(in.Script)))
+		size += len(in.Script)
+		size += 4
+	}
+
+	// outputs
+	size += xbase.VarIntSerializeSize(uint64(len(tx.outputs)))
+	for _, out := range tx.outputs {
+		size += 8
+		size += xbase.VarIntSerializeSize(uint64(len(out.Script)))
+		size += len(out.Script)
+	}
+
+	// Lock time
+	size += 4
+	return size
+}
+
+// WitnessSize -- the witness datas serialised size.
+func (tx *Transaction) WitnessSize() int {
+	size := 0
+	hasWitness := tx.HasWitness()
+
+	if hasWitness {
+		for _, in := range tx.inputs {
+			wits := in.Witness
+			size += xbase.VarIntSerializeSize(uint64(len(wits)))
+			for _, wit := range wits {
+				size += xbase.VarIntSerializeSize(uint64(len(wit)))
+				size += len(wit)
+			}
+		}
+	}
+	return size
+}
+
+// Weight -- defined as Base transaction size * 3 + Total transaction size.
+func (tx *Transaction) Weight() int {
+	baseSize := tx.BaseSize()
+	witnessSize := tx.WitnessSize()
+	return baseSize*(witnessScaleFactor-1) + (baseSize + witnessSize)
+}
+
+// Vsize -- defined as Transaction weight / 4 (rounded up to the next integer).
+func (tx *Transaction) Vsize() int {
+	return tx.Weight() / witnessScaleFactor
+}
+
+// Size -- size in bytes serialized as described in BIP144, including base data and witness data.
+func (tx *Transaction) Size() int {
+	return tx.BaseSize() + tx.WitnessSize()
+}
+
+// Fees -- returns the transaction fees.
+func (tx *Transaction) Fees() int {
+	var totalIn uint64
+	var totalOut uint64
+
+	for _, in := range tx.inputs {
+		totalIn += in.Value
+	}
+
+	for _, out := range tx.outputs {
+		totalOut += out.Value
+	}
+	return int(totalIn - totalOut)
+}
+
+// ToString -- returns a human-readable representation of a transaction.
+func (tx *Transaction) ToString() string {
+	var lines []string
+
+	lines = append(lines, "\n{")
+	lines = append(lines, fmt.Sprintf("  \"inputs\":["))
+	for i, in := range tx.inputs {
+		lines = append(lines, "    {")
+		lines = append(lines, fmt.Sprintf("      \"hash\":\t\"%s\",", xbase.NewIDToString(in.Hash)))
+		lines = append(lines, fmt.Sprintf("      \"n\":\t%d,", in.Index))
+		lines = append(lines, fmt.Sprintf("      \"Value\":\t%d,", in.Value))
+		lines = append(lines, fmt.Sprintf("      \"prevlocking\":\t\"%s\",", xvm.DisasmString(in.PrevLockingScript)))
+		if in.RedeemScript != nil {
+			lines = append(lines, fmt.Sprintf("      \"redeemscript\":\t\"%s\",", xvm.DisasmString(in.RedeemScript)))
+			lines = append(lines, fmt.Sprintf("      \"redeemhex\":\t\"%x\",", in.RedeemScript))
+		}
+		lines = append(lines, fmt.Sprintf("      \"script\":\t\"%s\",", xvm.DisasmString(in.Script)))
+		lines = append(lines, fmt.Sprintf("      \"sighash\":\t\"%x\",", in.SignatureHash))
+		if in.HasWitness {
+			lines = append(lines, fmt.Sprintf("      \"witness\":\t\"%x\",", in.Witness[0]))
+			lines = append(lines, fmt.Sprintf("      \"scriptcode\":\t\"%x\"", in.WitnessScriptCode))
+		}
+		if i == (len(tx.inputs) - 1) {
+			lines = append(lines, "    }")
+		} else {
+			lines = append(lines, "    },")
+		}
+	}
+	lines = append(lines, fmt.Sprintf("  ],"))
+
+	lines = append(lines, fmt.Sprintf("  \"outputs\":["))
+	for i, out := range tx.outputs {
+		lines = append(lines, "    {")
+		lines = append(lines, fmt.Sprintf("      \"value\":\t%d,", out.Value))
+		lines = append(lines, fmt.Sprintf("      \"script\":\t\"%s\"", xvm.DisasmString(out.Script)))
+		if i == (len(tx.outputs) - 1) {
+			lines = append(lines, "    }")
+		} else {
+			lines = append(lines, "    },")
+		}
+	}
+
+	fees := tx.Fees()
+	size := tx.Size()
+	witnessSize := tx.WitnessSize()
+	lines = append(lines, fmt.Sprintf("  ],"))
+	lines = append(lines, fmt.Sprintf("  \"basesize\":\t%v,", tx.BaseSize()))
+	lines = append(lines, fmt.Sprintf("  \"witsize\":\t%v,", witnessSize))
+	lines = append(lines, fmt.Sprintf("  \"vsize\":\t%v,", tx.Vsize()))
+	lines = append(lines, fmt.Sprintf("  \"size\":\t%v,", size))
+	lines = append(lines, fmt.Sprintf("  \"weight\":\t%v,", tx.Weight()))
+	lines = append(lines, fmt.Sprintf("  \"fees\":\t%v sat,", fees))
+	lines = append(lines, fmt.Sprintf("  \"feesperb\":\t%.2f sat/B,", float64(fees)/float64(size)))
+	lines = append(lines, fmt.Sprintf("  \"saving\":\t%.2f %%", (float64(witnessSize)/float64(size))*100))
+	lines = append(lines, "}\n")
+	return strings.Join(lines, "\n")
 }

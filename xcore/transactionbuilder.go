@@ -12,6 +12,7 @@ import (
 	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
+	"github.com/tokublock/tokucore/xvm"
 )
 
 const (
@@ -242,7 +243,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			return nil, err
 		}
 
-		txin := NewTxIn(txid, coin.n, script, vin.redeemScript)
+		txin := NewTxIn(txid, coin.n, coin.value, script, vin.redeemScript)
 		txins = append(txins, txin)
 		totalIn += int64(coin.value)
 	}
@@ -290,7 +291,6 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			if b.change == nil {
 				return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_CHANGETO_EMPTY)
 			}
-
 			script, err := PayToAddrScript(b.change.addr)
 			if err != nil {
 				return nil, err
@@ -301,26 +301,34 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 
 	// Build tx.
 	transaction := NewTransaction()
-	transaction.SetLockTime(b.lockTime)
-	for _, txin := range txins {
-		transaction.AddInput(txin)
+	{
+		// LockTime.
+		transaction.SetLockTime(b.lockTime)
+
+		// Txin.
+		for _, txin := range txins {
+			transaction.AddInput(txin)
+		}
+
+		// Txout.
+		for _, txout := range txouts {
+			transaction.AddOutput(txout)
+		}
+
+		// Change Txout.
+		if changeTxOut != nil {
+			transaction.AddOutput(changeTxOut)
+		}
+
+		// Push datas.
+		for _, data := range b.pushDatas {
+			pushData, err := xvm.NewScriptBuilder().AddOp(xvm.OP_RETURN).AddData(data).Script()
+			if err != nil {
+				return nil, err
+			}
+			transaction.AddOutput(NewTxOut(0, pushData))
+		}
 	}
-	for _, txout := range txouts {
-		transaction.AddOutput(txout)
-	}
-	if changeTxOut != nil {
-		transaction.AddOutput(changeTxOut)
-	}
-	for _, pushData := range b.pushDatas {
-		transaction.AddOutput(NewTxOut(0, pushData))
-	}
-	transaction.stats.TotalIn = totalIn
-	transaction.stats.TotalOut = totalOut
-	transaction.stats.Change = changeAmount
-	transaction.stats.Fees = fees
-	transaction.stats.FeesPerKb = b.relayFeePerKb
-	transaction.stats.EstimateSize = estimateSize
-	transaction.stats.EstimateFees = estimateFees
 
 	// Sign.
 	if b.sign {
@@ -328,14 +336,8 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			if vin.keys == nil {
 				return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, i)
 			}
-			if vin.compressed {
-				if err := transaction.SignIndex(uint32(i), vin.keys...); err != nil {
-					return nil, err
-				}
-			} else {
-				if err := transaction.SignIndexUncompressed(uint32(i), vin.keys...); err != nil {
-					return nil, err
-				}
+			if err := transaction.SignIndex(i, vin.compressed, vin.keys...); err != nil {
+				return nil, err
 			}
 		}
 	}

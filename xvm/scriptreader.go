@@ -133,11 +133,11 @@ func DisasmString(script []byte) string {
 }
 
 // RemoveOpcode -- remove the opcode.
-func RemoveOpcode(buf []byte, opcode byte) ([]byte, error) {
+func RemoveOpcode(buf []byte, opcode byte) []byte {
 	reader := NewScriptReader(buf)
 	instrs, err := reader.AllInstructions()
 	if err != nil {
-		return nil, err
+		return buf
 	}
 
 	rets := make([]byte, 0, len(buf))
@@ -145,10 +145,10 @@ func RemoveOpcode(buf []byte, opcode byte) ([]byte, error) {
 		if instr.op.value != opcode {
 			instrBytes, err := instr.bytes()
 			if err != nil {
-				return nil, err
+				return buf
 			}
 			rets = append(rets, instrBytes...)
 		}
 	}
-	return rets, nil
+	return rets
 }

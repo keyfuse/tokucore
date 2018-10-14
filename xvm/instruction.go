@@ -23,6 +23,11 @@ func (instr *Instruction) OpCode() byte {
 	return instr.op.value
 }
 
+// Data -- returns the instruce data.
+func (instr *Instruction) Data() []byte {
+	return instr.data
+}
+
 // bytes --
 // returns any data associated with the opcode encoded as it would be in a script.
 // This is used for unparsing scripts from parsed opcodes.

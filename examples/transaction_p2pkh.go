@@ -17,6 +17,7 @@ func assertNil(err error) {
 	}
 }
 
+// Demo for send coin to P2PKH address.
 func main() {
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := xcore.NewHDKey(seed)
@@ -53,7 +54,7 @@ func main() {
 	assertNil(err)
 
 	fmt.Printf("%v\n", tx.ToString())
-	fmt.Printf("tx.id:%s\n", tx.ID())
+	fmt.Printf("p2pkh.txid:%s\n", tx.ID())
 	signedTx := tx.Serialize()
-	fmt.Printf("tx.hex:%x\n", signedTx)
+	fmt.Printf("p2pkh.signed.tx:%x\n", signedTx)
 }

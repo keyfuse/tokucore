@@ -45,6 +45,11 @@ func NewMicroPayer(payer *xcrypto.PrivateKey, payee *xcrypto.PublicKey, amount u
 	}
 }
 
+// Address -- returns the address of MicroPayer.
+func (m *MicroPayer) Address() Address {
+	return m.addr
+}
+
 // CreateBond -- create bond transaction and sign.
 func (m *MicroPayer) CreateBond(coin *Coin) (*Transaction, error) {
 	bondScript := NewPayToMultiSigScript(2, m.payerPub.Serialize(), m.payeePub.Serialize())
@@ -104,13 +109,13 @@ func (m *MicroPayer) CreateRefund(bondTx *Transaction) (*Transaction, error) {
 func (m *MicroPayer) SignRefund(refund *Transaction, sign []byte) (*Transaction, error) {
 	pubkeys := make([]PubKeySign, 2)
 
-	sig, err := refund.RawSignature(0, m.prv)
+	mysign, err := refund.RawSignature(0, m.prv)
 	if err != nil {
 		return nil, err
 	}
-	pubkeys[0] = PubKeySign{PubKey: m.payerPub.Serialize(), Signature: sig}
+	pubkeys[0] = PubKeySign{PubKey: m.payerPub.Serialize(), Signature: mysign}
 	pubkeys[1] = PubKeySign{PubKey: m.payeePub.Serialize(), Signature: sign}
-	if err := refund.Fill(refund.SignIdx(), pubkeys); err != nil {
+	if err := refund.EmbedIdxSignature(refund.SignIdx(), pubkeys); err != nil {
 		return nil, err
 	}
 	if err := refund.Verify(); err != nil {
@@ -148,6 +153,11 @@ func NewMicroPayee(payee *xcrypto.PrivateKey, payer *xcrypto.PublicKey, amount u
 		payeePub: payee.PubKey(),
 		addr:     NewPayToPubKeyHashAddress(payee.PubKey().Hash160()),
 	}
+}
+
+// Address -- returns the address of MicroPayee.
+func (m *MicroPayee) Address() Address {
+	return m.addr
 }
 
 // SignRefund -- sign the refund transaction and return the signature.
@@ -218,7 +228,7 @@ func (m *MicroPayee) SignPayment(amount uint64, sign []byte) (*Transaction, erro
 	}
 	pubkeys[0] = PubKeySign{PubKey: m.payerPub.Serialize(), Signature: sign}
 	pubkeys[1] = PubKeySign{PubKey: m.payeePub.Serialize(), Signature: sig}
-	if err := tx.Fill(0, pubkeys); err != nil {
+	if err := tx.EmbedIdxSignature(0, pubkeys); err != nil {
 		return nil, err
 	}
 	if err := tx.Verify(); err != nil {

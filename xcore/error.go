@@ -22,6 +22,7 @@ const (
 	ER_ADDRESS_TYPE_UNKNOWN                        int = 4102
 	ER_ADDRESS_FORMAT_MALFORMED                    int = 4103
 	ER_ADDRESS_SIZE_MALFORMED                      int = 4104
+	ER_ADDRESS_WITNESS_VERSION_UNSUPPORTED         int = 4105
 	ER_SCRIPT_TYPE_UNKNOWN                         int = 5100
 	ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED    int = 5105
 	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED        int = 5106
@@ -51,6 +52,7 @@ var Errors = map[int]*xerror.Error{
 	ER_ADDRESS_TYPE_UNKNOWN:                        {Num: ER_ADDRESS_TYPE_UNKNOWN, State: "TADDR0", Message: "address.unknown.type[%v]"},
 	ER_ADDRESS_FORMAT_MALFORMED:                    {Num: ER_ADDRESS_FORMAT_MALFORMED, State: "TADDR0", Message: "address.unknown.format[%v]"},
 	ER_ADDRESS_SIZE_MALFORMED:                      {Num: ER_ADDRESS_SIZE_MALFORMED, State: "TADDR0", Message: "address.size[%v].invalid"},
+	ER_ADDRESS_WITNESS_VERSION_UNSUPPORTED:         {Num: ER_ADDRESS_WITNESS_VERSION_UNSUPPORTED, State: "TADDR0", Message: "address.witness.address.version[%v].unsupported"},
 	ER_SCRIPT_TYPE_UNKNOWN:                         {Num: ER_SCRIPT_TYPE_UNKNOWN, State: "TS000", Message: "script.unknow.type[%v]"},
 	ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED:    {Num: ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED, State: "TS000", Message: "script.standard.unsupported.address.type[%v]"},
 	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED:        {Num: ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED, State: "TS000", Message: "script.standard.pubkeys[%v].less.than.nrequired[%v]"},

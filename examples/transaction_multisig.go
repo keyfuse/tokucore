@@ -18,6 +18,7 @@ func assertNil(err error) {
 	}
 }
 
+// Demo for funding coins to MultiSig address and spending from MultiSig address to P2PKH.
 func main() {
 	net := network.TestNet
 	seed := []byte("this.is.bohu.seed.")
@@ -74,10 +75,9 @@ func main() {
 		err = tx.Verify()
 		assertNil(err)
 
-		fmt.Printf("%v\n", tx.ToString())
-		fmt.Printf("funding.txid:%s\n", tx.ID())
-		signedTx := tx.Serialize()
-		fmt.Printf("funding.signed.tx:%x\n", signedTx)
+		fmt.Printf("multisig.fund:%v\n", tx.ToString())
+		fmt.Printf("multisig.fund.txid:%s\n", tx.ID())
+		fmt.Printf("multisig.fund.tx:%x\n", tx.Serialize())
 	}
 
 	// Spending.
@@ -105,9 +105,8 @@ func main() {
 		err = tx.Verify()
 		assertNil(err)
 
-		fmt.Printf("%v\n", tx.ToString())
-		fmt.Printf("spending.txid:%s\n", tx.ID())
-		signedTx := tx.Serialize()
-		fmt.Printf("spending.signed.tx:%x\n", signedTx)
+		fmt.Printf("multisig.spend:%v\n", tx.ToString())
+		fmt.Printf("multisig.spend.txid:%s\n", tx.ID())
+		fmt.Printf("multisig.spend.tx:%x\n", tx.Serialize())
 	}
 }

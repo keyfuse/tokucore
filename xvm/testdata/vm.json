@@ -24,6 +24,16 @@
 
 [
     [
+        "numeric.OP_ADD.pop1.error",
+        "OP_ADD OP_15 OP_EQUAL",
+        "OP_1",
+        "script.stack.index[0].invalid.for.stack.size[0] (errno 1110) (state TS000)",
+        "true"
+    ]
+],
+
+[
+    [
         "crypto.OP_CHECKSIG",
         "OP_DUP OP_HASH160 OP_DATA_20 0x751e76e8199196d454941c45d1b3a323f1433bd6 OP_EQUALVERIFY OP_CHECKSIG",
         "OP_DATA_71 0x304402205ace0f3eb575dab1957f51ac25ad130f44fb5ce29df7714121c7c973cb7a304f02202dd1ed0e62947262e4e63dea29e17f77db5c98084bc9ead21e370972e4ec7d9601 OP_DATA_33 0x0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798",

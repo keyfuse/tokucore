@@ -14,6 +14,9 @@ type Network struct {
 	WitnessPubKeyHashAddrID byte // First byte of a P2WPKH address
 	WitnessScriptHashAddrID byte // First byte of P2WSH address
 
+	// Human-readable part for Bech32 encoded segwit addresses, as defined in BIP173.
+	Bech32HRPSegwit string
+
 	// BIP32 hierarchical deterministic extended key magics.
 	HDPrivateKeyID []byte
 	HDPublicKeyID  []byte
@@ -36,6 +39,9 @@ var (
 		WitnessPubKeyHashAddrID: 0x06, // starts with p2
 		WitnessScriptHashAddrID: 0x0A, // starts with 7Xh
 
+		// Human-readable part for Bech32 encoded segwit addresses, as defined in BIP173.
+		Bech32HRPSegwit: "bc", // always bc for main net
+
 		// BIP32 hierarchical deterministic extended key magics
 		HDPrivateKeyID: []byte{0x04, 0x88, 0xad, 0xe4}, // starts with xprv
 		HDPublicKeyID:  []byte{0x04, 0x88, 0xb2, 0x1e}, // starts with xpub
@@ -56,6 +62,9 @@ var (
 		WitnessPubKeyHashAddrID: 0x03, // starts with QW
 		WitnessScriptHashAddrID: 0x28, // starts with T7n
 		PrivateKeyID:            0xef, // starts with 9 (uncompressed) or c (compressed)
+
+		// Human-readable part for Bech32 encoded segwit addresses, as defined in BIP173.
+		Bech32HRPSegwit: "tb", // always tb for test net
 
 		// BIP32 hierarchical deterministic extended key magics
 		HDPrivateKeyID: []byte{0x04, 0x35, 0x83, 0x94}, // starts with tprv

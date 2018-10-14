@@ -16,7 +16,7 @@ import (
 )
 
 func TestTransactionBuilderP2PKH(t *testing.T) {
-	msg, _ := DataOutput([]byte("666...satoshi"))
+	msg := []byte("666...satoshi")
 
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := NewHDKey(seed)
@@ -56,57 +56,21 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 
 	t.Logf("%v", tx.ToString())
 	t.Logf("txid:%v", tx.ID())
+
+	assert.Equal(t, tx.BaseSize(), tx.Size())
+	assert.Equal(t, tx.Vsize(), tx.Size())
+
+	t.Logf("basesize:%+v", tx.BaseSize())
+	t.Logf("witnesssize:%+v", tx.WitnessSize())
+	t.Logf("vsize:%+v", tx.Vsize())
+	t.Logf("weight:%+v", tx.Weight())
+	t.Logf("size:%+v", tx.Size())
 	signedTx := tx.Serialize()
+	t.Logf("actual.size:%v", len(signedTx))
 	t.Logf("signed.tx:%x", signedTx)
 }
 
-func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
-	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := NewHDKey(seed)
-	bohuPrv := bohuHDKey.PrivateKey()
-	bohuPub := bohuPrv.PubKey()
-
-	// Uncompressed pubkey.
-	pubHash := xcrypto.Hash160(bohuPub.SerializeUncompressed())
-	script := NewPayToPubKeyHashScript(pubHash)
-	bohu := script.GetAddress()
-	locking, err := script.GetLockingScriptBytes()
-	assert.Nil(t, err)
-
-	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
-
-	// Satoshi.
-	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
-
-	// Prepare the UTXOs.
-	bohuCoin := NewCoinBuilder().AddOutput(
-		"5af1520f1d3e818fca695c2a903baa4a7eec4954f0b35aa01be1f2c1d2cfd802",
-		0,
-		129990000,
-		fmt.Sprintf("%x", locking),
-	).ToCoins()[0]
-
-	tx, err := NewTransactionBuilder().
-		AddCoins(bohuCoin).
-		AddKeys(bohuPrv).
-		To(satoshi, 666666).
-		SetPubKeyUncompressed().
-		Then().
-		SetChange(bohu).
-		SendFees(10000).
-		Then().
-		Sign().
-		BuildTransaction()
-	assert.Nil(t, err)
-
-	// Verify.
-	err = tx.Verify()
-	assert.Nil(t, err)
-}
-
-func TestTransactionBuilderMultisig(t *testing.T) {
+func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
@@ -189,7 +153,7 @@ func TestTransactionBuilderMultisig(t *testing.T) {
 		assert.Nil(t, err)
 
 		// Verify.
-		err = tx.VerifyDebug()
+		err = tx.Verify()
 		assert.Nil(t, err)
 
 		t.Logf("%v", tx.ToString())
@@ -197,6 +161,131 @@ func TestTransactionBuilderMultisig(t *testing.T) {
 		t.Logf("txid:%v", tx.ID())
 		t.Logf("spending.signed.tx:%x", signedTx)
 	}
+}
+
+func TestTransactionBuilderP2WPKH(t *testing.T) {
+	seed := []byte("this.is.bohu.seed.")
+	bohuHDKey := NewHDKey(seed)
+	bohuPrv := bohuHDKey.PrivateKey()
+	bohu := bohuHDKey.GetAddress()
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
+
+	// Satoshi.
+	seed = []byte("this.is.satoshi.seed.")
+	satoshiHDKey := NewHDKey(seed)
+	satoshiPrv := satoshiHDKey.PrivateKey()
+	satoshiPubKey := satoshiHDKey.PublicKey()
+	satoshi := NewPayToWitnessPubKeyHashAddress(satoshiPubKey.Hash160())
+	t.Logf("satoshi.p2wpkh.addr:%v", satoshi.ToString(network.TestNet))
+
+	// Funding.
+	{
+		bohuCoin := NewCoinBuilder().AddOutput(
+			"f519a75190312039ddf885231205006b14f2e69f6e5b02314cb0e367b027fa86",
+			1,
+			127297408,
+			"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
+		).ToCoins()[0]
+
+		tx, err := NewTransactionBuilder().
+			AddCoins(bohuCoin).
+			AddKeys(bohuPrv).
+			To(satoshi, 666666).
+			Then().
+			SetChange(bohu).
+			SetRelayFeePerKb(20000).
+			Then().
+			Sign().
+			BuildTransaction()
+		assert.Nil(t, err)
+
+		// Verify.
+		err = tx.Verify()
+		assert.Nil(t, err)
+
+		t.Logf("fund:%v", tx.ToString())
+		t.Logf("fund.txid:%v", tx.ID())
+		t.Logf("fund.tx:%x", tx.Serialize())
+		t.Logf("actualsize:%v", len(tx.Serialize()))
+	}
+
+	// Spending.
+	{
+		satoshiCoin := NewCoinBuilder().AddOutput(
+			"c37c3154ae611cfd9a57e684f0c12d51491d09060c643adc292565884e947b2b",
+			0,
+			666666,
+			"00148b7f2212ecc4384abcf1df3fc5783e9c2a24d5a5",
+		).ToCoins()[0]
+
+		tx, err := NewTransactionBuilder().
+			AddCoins(satoshiCoin).
+			AddKeys(satoshiPrv).
+			To(bohu, 66666).
+			Then().
+			SetChange(satoshi).
+			SetRelayFeePerKb(20000).
+			Then().
+			Sign().
+			BuildTransaction()
+		assert.Nil(t, err)
+
+		// Verify.
+		err = tx.Verify()
+		assert.Nil(t, err)
+
+		t.Logf("spend:%v", tx.ToString())
+		t.Logf("spend.txid:%v", tx.ID())
+		t.Logf("spend.witnessid:%v", tx.WitnessID())
+		t.Logf("spend.tx:%x", tx.Serialize())
+		t.Logf("actualsize:%v", len(tx.Serialize()))
+	}
+}
+
+func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
+	seed := []byte("this.is.bohu.seed.")
+	bohuHDKey := NewHDKey(seed)
+	bohuPrv := bohuHDKey.PrivateKey()
+	bohuPub := bohuPrv.PubKey()
+
+	// Uncompressed pubkey.
+	pubHash := xcrypto.Hash160(bohuPub.SerializeUncompressed())
+	script := NewPayToPubKeyHashScript(pubHash)
+	bohu := script.GetAddress()
+	locking, err := script.GetLockingScriptBytes()
+	assert.Nil(t, err)
+
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
+
+	// Satoshi.
+	seed = []byte("this.is.satoshi.seed.")
+	satoshiHDKey := NewHDKey(seed)
+	satoshi := satoshiHDKey.GetAddress()
+
+	// Prepare the UTXOs.
+	bohuCoin := NewCoinBuilder().AddOutput(
+		"5af1520f1d3e818fca695c2a903baa4a7eec4954f0b35aa01be1f2c1d2cfd802",
+		0,
+		129990000,
+		fmt.Sprintf("%x", locking),
+	).ToCoins()[0]
+
+	tx, err := NewTransactionBuilder().
+		AddCoins(bohuCoin).
+		AddKeys(bohuPrv).
+		To(satoshi, 666666).
+		SetPubKeyUncompressed().
+		Then().
+		SetChange(bohu).
+		SendFees(10000).
+		Then().
+		Sign().
+		BuildTransaction()
+	assert.Nil(t, err)
+
+	// Verify.
+	err = tx.Verify()
+	assert.Nil(t, err)
 }
 
 func TestTransactionBuilderHybrid(t *testing.T) {
@@ -218,7 +307,7 @@ func TestTransactionBuilderHybrid(t *testing.T) {
 	aliceBobCoin := MockP2SHCoin(aliceHDKey, bobHDKey, redeem)
 
 	// AD.
-	pushData, _ := DataOutput([]byte("this.is.pushdata"))
+	pushData := []byte("this.is.pushdata")
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
@@ -250,7 +339,6 @@ func TestTransactionBuilderHybrid(t *testing.T) {
 	err = tx.Verify()
 	assert.Nil(t, err)
 	t.Logf("signed.hex:%x", signedTx)
-	t.Logf("builder.stats:%#v", tx.Stats())
 	t.Logf("signed.string:%v", tx.ToString())
 }
 
@@ -273,7 +361,7 @@ func TestTransactionBuilderFees(t *testing.T) {
 	aliceBobCoin := MockP2SHCoin(aliceHDKey, bobHDKey, redeem)
 
 	// AD.
-	pushData, _ := DataOutput([]byte("this.is.pushdata"))
+	pushData := []byte("this.is.pushdata")
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
@@ -303,7 +391,6 @@ func TestTransactionBuilderFees(t *testing.T) {
 	assert.Nil(t, err)
 	signedTx := tx.Serialize()
 	t.Logf("actual.size:%v", len(signedTx))
-	t.Logf("builder.stats:%#v", tx.Stats())
 }
 
 func TestTransactionBuilderError(t *testing.T) {
@@ -437,7 +524,7 @@ func TestTransactionBuilderError(t *testing.T) {
 					BuildTransaction()
 				return err
 			},
-			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FEE_TOO_HIGH, 188, 10),
+			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FEE_TOO_HIGH, 192, 10),
 		},
 	}
 	for _, test := range tests {

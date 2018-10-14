@@ -6,6 +6,7 @@
 package xcore
 
 import (
+	"github.com/tokublock/tokucore/xerror"
 	"github.com/tokublock/tokucore/xvm"
 )
 
@@ -24,6 +25,12 @@ const (
 	NullDataTy                               // Empty data-only (provably prunable).
 )
 
+// PubKeySign -- Public key and signature pair.
+type PubKeySign struct {
+	PubKey    []byte
+	Signature []byte
+}
+
 // Script --
 type Script interface {
 	// GetAddress used to get the Address interface.
@@ -32,37 +39,32 @@ type Script interface {
 	GetLockingScriptBytes() ([]byte, error)
 }
 
-// isPubkeyHash --
-// returns true if the script passed is a pay-to-pubkey-hash transaction, false otherwise.
-func isPubkeyHash(instrs []xvm.Instruction) bool {
-	return len(instrs) == 5 &&
-		instrs[0].OpCode() == xvm.OP_DUP &&
-		instrs[1].OpCode() == xvm.OP_HASH160 &&
-		instrs[2].OpCode() == xvm.OP_DATA_20 &&
-		instrs[3].OpCode() == xvm.OP_EQUALVERIFY &&
-		instrs[4].OpCode() == xvm.OP_CHECKSIG
-}
-
-// isScriptHash --
-// returns true if the script passed is a pay-to-script-hash transaction, false otherwise.
-func isScriptHash(instrs []xvm.Instruction) bool {
-	return len(instrs) == 3 &&
-		instrs[0].OpCode() == xvm.OP_HASH160 &&
-		instrs[1].OpCode() == xvm.OP_DATA_20 &&
-		instrs[2].OpCode() == xvm.OP_EQUAL
-}
-
-func typeOfScript(instrs []xvm.Instruction) ScriptClass {
+// GetScriptClass -- gets the script class.
+func GetScriptClass(script []byte) ScriptClass {
+	instrs, err := xvm.NewScriptReader(script).AllInstructions()
+	if err != nil {
+		return NonStandardTy
+	}
 	switch {
 	case isPubkeyHash(instrs):
 		return PubKeyHashTy
 	case isScriptHash(instrs):
 		return ScriptHashTy
+	case isWitnessPubKeyHash(instrs):
+		return WitnessV0PubKeyHashTy
 	}
 	return NonStandardTy
 }
 
-// DataOutput -- returns OP_RETURN datas.
-func DataOutput(data []byte) ([]byte, error) {
-	return xvm.NewScriptBuilder().AddOp(xvm.OP_RETURN).AddData(data).Script()
+// PayToAddrScript -- returns the locking script by address type.
+func PayToAddrScript(addr Address) ([]byte, error) {
+	switch addr.(type) {
+	case *PayToPubKeyHashAddress:
+		return NewPayToPubKeyHashScript(addr.Hash160()).GetLockingScriptBytes()
+	case *PayToScriptHashAddress:
+		return NewPayToScriptHashScript(addr.Hash160()).GetLockingScriptBytes()
+	case *PayToWitnessPubKeyHashAddress:
+		return NewPayToWitnessPubKeyHashScript(addr.Hash160()).GetLockingScriptBytes()
+	}
+	return nil, xerror.NewError(Errors, ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED, addr)
 }
