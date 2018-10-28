@@ -56,7 +56,6 @@ func (curve *secp256k1Curve) IsOnCurve(x, y *big.Int) bool {
 	x3.Mul(&x3, x)
 	x3.Add(&x3, curve.B)
 	x3.Mod(&x3, curve.P)
-
 	return x3.Cmp(&y2) == 0
 }
 
@@ -178,7 +177,6 @@ func (curve *secp256k1Curve) addJacobian(x1, y1, z1, x2, y2, z2 *big.Int) (*big.
 	z3.Sub(z3, z2z2)
 	z3.Mul(z3, h)
 	z3.Mod(z3, curve.P)
-
 	return x3, y3, z3
 }
 
@@ -233,7 +231,6 @@ func (curve *secp256k1Curve) doubleJacobian(x, y, z *big.Int) (*big.Int, *big.In
 	z3.Mul(y, z)
 	z3.Lsh(&z3, 1)
 	z3.Mod(&z3, curve.P)
-
 	return &x3, &y3, &z3
 }
 
@@ -251,7 +248,6 @@ func (curve *secp256k1Curve) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *b
 			byte <<= 1
 		}
 	}
-
 	return curve.affineFromJacobian(x, y, z)
 }
 
