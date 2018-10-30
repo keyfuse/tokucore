@@ -1,6 +1,6 @@
 # tokucore – A Simple, Powerful Library for Bitcoin Apps.
 
-[![Build Status](https://travis-ci.org/tokublock/tokucore.png)](https://travis-ci.org/tokublock/tokucore) [![Go Report Card](https://goreportcard.com/badge/github.com/tokublock/tokucore)](https://goreportcard.com/report/github.com/tokublock/tokucore) [![codecov.io](https://codecov.io/gh/tokublock/tokucore/graphs/badge.svg)](https://codecov.io/gh/tokublock/tokucore/branch/master) [![MIT License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
+[![Build Status](https://travis-ci.org/tokublock/tokucore.png)](https://travis-ci.org/tokublock/tokucore) [![Go Report Card](https://goreportcard.com/badge/github.com/tokublock/tokucore)](https://goreportcard.com/report/github.com/tokublock/tokucore) [![codecov.io](https://codecov.io/gh/tokublock/tokucore/graphs/badge.svg)](https://codecov.io/gh/tokublock/tokucore/branch/master) [![BSD License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
 
 ## tokucore
@@ -41,6 +41,7 @@ $ make test
 ## Applications
 
 - [JustDoBlockchain](https://justdoblockchain.com) - A website Learning Blockchain Demo by Demo.
+- [ShaFish](https://shafish.com) - A web-based, trusted Bitcoin blockchain timestamping platform.
 
 ## Can I trust this code?
 > Don't trust. Verify.
