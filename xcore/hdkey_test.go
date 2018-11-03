@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/tokublock/tokucore/network"
 )
 
@@ -385,5 +386,14 @@ func TestPublicDerivationByPath(t *testing.T) {
 				test.name, pubStr, test.wantPub)
 			continue
 		}
+	}
+}
+
+func TestHDKeyRand(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		rand, err := NewHDKeyRand()
+		assert.Nil(t, err)
+		wif := rand.ToString(network.MainNet)
+		t.Logf("%s", wif)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 
 	"crypto/hmac"
 	"crypto/sha512"
@@ -83,7 +84,8 @@ func NewHDKey(seed []byte) *HDKey {
 // NewHDKeyRand -- returns the HDKey with random seed.
 func NewHDKeyRand() (*HDKey, error) {
 	seed := make([]byte, 256)
-	if _, err := rand.Read(seed); err != nil {
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
+	if _, err := random.Read(seed); err != nil {
 		return nil, err
 	}
 	return NewHDKey(seed), nil
