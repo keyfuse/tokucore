@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func TestMicroPayment(t *testing.T) {
@@ -34,13 +35,13 @@ func TestMicroPayment(t *testing.T) {
 	{
 		// satoshi.
 		seed := []byte("this.is.satoshi.seed.")
-		satoshiHDKey := NewHDKey(seed)
+		satoshiHDKey := bip32.NewHDKey(seed)
 		satoshiPrv := satoshiHDKey.PrivateKey()
 		satoshiPub := satoshiHDKey.PublicKey()
 
 		// starbucks.
 		seed = []byte("this.is.starbucks.seed.")
-		starbucksHDKey := NewHDKey(seed)
+		starbucksHDKey := bip32.NewHDKey(seed)
 		starbucksPrv := starbucksHDKey.PrivateKey()
 		starbucksPub := starbucksHDKey.PublicKey()
 

@@ -10,12 +10,13 @@ import (
 
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func main() {
-	hdprvkey, _ := xcore.NewHDKeyRand()
+	hdprvkey, _ := bip32.NewHDKeyRand()
 	hdpubkey := hdprvkey.HDPublicKey()
-	addr := hdpubkey.GetAddress()
+	addr := xcore.NewPayToPubKeyHashAddress(hdprvkey.PublicKey().Hash160())
 
 	fmt.Printf("address(mainet):\t%s\n", addr.ToString(network.MainNet))
 	fmt.Printf("prv.wif(mainet):\t%s\n", hdprvkey.ToString(network.MainNet))

@@ -10,6 +10,7 @@ import (
 
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func assertNil(err error) {
@@ -22,25 +23,26 @@ func assertNil(err error) {
 func main() {
 	net := network.TestNet
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := xcore.NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
-	bohu := bohuHDKey.GetAddress()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := xcore.NewPayToPubKeyHashAddress(bohuPub.Hash160())
 	fmt.Printf("bohu.addr:%v", bohu.ToString(net))
 
 	// A.
 	seed = []byte("this.is.a.seed.")
-	aHDKey := xcore.NewHDKey(seed)
+	aHDKey := bip32.NewHDKey(seed)
 	aPrv := aHDKey.PrivateKey()
 	aPub := aHDKey.PublicKey().Serialize()
 
 	// B.
 	seed = []byte("this.is.b.seed.")
-	bHDKey := xcore.NewHDKey(seed)
+	bHDKey := bip32.NewHDKey(seed)
 	bPub := bHDKey.PublicKey().Serialize()
 
 	// C.
 	seed = []byte("this.is.c.seed.")
-	cHDKey := xcore.NewHDKey(seed)
+	cHDKey := bip32.NewHDKey(seed)
 	cPrv := cHDKey.PrivateKey()
 	cPub := cHDKey.PublicKey().Serialize()
 

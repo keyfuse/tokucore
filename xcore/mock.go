@@ -10,12 +10,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"time"
 
+	"github.com/tokublock/tokucore/xcore/bip32"
 	"github.com/tokublock/tokucore/xcrypto"
 )
 
 // MockP2PKHCoin -- mock p2pkh coin for tests.
-func MockP2PKHCoin(hdKey *HDKey) *Coin {
+func MockP2PKHCoin(hdKey *bip32.HDKey) *Coin {
 	txid := make([]byte, 32)
 	rand.Read(txid)
 
@@ -29,7 +31,7 @@ func MockP2PKHCoin(hdKey *HDKey) *Coin {
 }
 
 // MockP2SHCoin -- mocks p2sh coin for tests.
-func MockP2SHCoin(alice *HDKey, bob *HDKey, redeem []byte) *Coin {
+func MockP2SHCoin(alice *bip32.HDKey, bob *bip32.HDKey, redeem []byte) *Coin {
 	//bobAlice := NewPayToMultiSigScript(2, alice.PublicKey().Serialize(), bob.PublicKey().Serialize())
 	//bobAliceScript, _ := bobAlice.GetLockingScriptBytes()
 	redeemScript := xcrypto.Hash160(redeem)
@@ -49,8 +51,11 @@ func MockP2SHCoin(alice *HDKey, bob *HDKey, redeem []byte) *Coin {
 func MockPublicKeys(num int) [][]byte {
 	var keys [][]byte
 	for i := 0; i < num; i++ {
-		hdkey, _ := NewHDKeyRand()
-		key := hdkey.PublicKey().Serialize()
+		seed := make([]byte, 256)
+		random := rand.New(rand.NewSource(time.Now().UnixNano()))
+		random.Read(seed)
+
+		key := xcrypto.PrvKeyFromBytes(seed).PubKey().Serialize()
 		keys = append(keys, key)
 	}
 	return keys

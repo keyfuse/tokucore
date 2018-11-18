@@ -12,42 +12,31 @@ import (
 // Error type.
 const (
 	ER_KEY_SIGNATURE_VERIFY_FAILED                 int = 2101
-	ER_HDKEY_DERIVE_HARD_FROM_PUBLIC               int = 3101
-	ER_HDKEY_PRIV_EXTKEY_INVALID                   int = 3102
-	ER_HDKEY_CHILD_INVALID                         int = 3103
-	ER_HDKEY_SERIALIZED_KEY_WRONG_SIZE             int = 3104
-	ER_HDKEY_CHECKSUM_MISMATCH                     int = 3105
-	ER_HDKEY_DERIVE_PATH_INVALID                   int = 3106
-	ER_ADDRESS_CHECKSUM_MISMATCH                   int = 4101
-	ER_ADDRESS_TYPE_UNKNOWN                        int = 4102
-	ER_ADDRESS_FORMAT_MALFORMED                    int = 4103
-	ER_ADDRESS_SIZE_MALFORMED                      int = 4104
-	ER_ADDRESS_WITNESS_VERSION_UNSUPPORTED         int = 4105
-	ER_SCRIPT_TYPE_UNKNOWN                         int = 5100
-	ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED    int = 5105
-	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED        int = 5106
-	ER_TRANSACTION_SIGN_OUT_INDEX                  int = 6000
-	ER_TRANSACTION_SIGN_REDEEM_EMPTY               int = 6001
-	ER_TRANSACTION_BUILDER_AMOUNT_NOT_ENOUGH_ERROR int = 6101
-	ER_TRANSACTION_BUILDER_FROM_EMPTY              int = 6102
-	ER_TRANSACTION_BUILDER_CHANGETO_EMPTY          int = 6103
-	ER_TRANSACTION_BUILDER_SENDTO_EMPTY            int = 6104
-	ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY          int = 6105
-	ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH      int = 6106
-	ER_TRANSACTION_BUILDER_FEE_TOO_HIGH            int = 6107
-	ER_TRANSACTION_PARTIALLY_MAGIC_MISMATCH        int = 6201
-	ER_MICROPAYMENT_LOCKTIME_MISMATCH              int = 6301
-	ER_MICROPAYMENT_REFUND_BOND_MISMATCH           int = 6302
+	ER_ADDRESS_CHECKSUM_MISMATCH                   int = 3101
+	ER_ADDRESS_TYPE_UNKNOWN                        int = 3102
+	ER_ADDRESS_FORMAT_MALFORMED                    int = 3103
+	ER_ADDRESS_SIZE_MALFORMED                      int = 3104
+	ER_ADDRESS_WITNESS_VERSION_UNSUPPORTED         int = 3105
+	ER_SCRIPT_TYPE_UNKNOWN                         int = 4100
+	ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED    int = 4105
+	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED        int = 4106
+	ER_TRANSACTION_SIGN_OUT_INDEX                  int = 5000
+	ER_TRANSACTION_SIGN_REDEEM_EMPTY               int = 5001
+	ER_TRANSACTION_BUILDER_AMOUNT_NOT_ENOUGH_ERROR int = 5101
+	ER_TRANSACTION_BUILDER_FROM_EMPTY              int = 5102
+	ER_TRANSACTION_BUILDER_CHANGETO_EMPTY          int = 5103
+	ER_TRANSACTION_BUILDER_SENDTO_EMPTY            int = 5104
+	ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY          int = 5105
+	ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH      int = 5106
+	ER_TRANSACTION_BUILDER_FEE_TOO_HIGH            int = 5107
+	ER_TRANSACTION_PARTIALLY_MAGIC_MISMATCH        int = 5201
+	ER_MICROPAYMENT_LOCKTIME_MISMATCH              int = 5301
+	ER_MICROPAYMENT_REFUND_BOND_MISMATCH           int = 5302
 )
 
 // Errors -- the jump table of error.
 var Errors = map[int]*xerror.Error{
 	ER_KEY_SIGNATURE_VERIFY_FAILED:                 {Num: ER_KEY_SIGNATURE_VERIFY_FAILED, State: "TKS00", Message: "key.signature.verify.failed"},
-	ER_HDKEY_DERIVE_HARD_FROM_PUBLIC:               {Num: ER_HDKEY_DERIVE_HARD_FROM_PUBLIC, State: "THK00", Message: "hdkey.derive.a.hardened.key.from.public.key.error"},
-	ER_HDKEY_PRIV_EXTKEY_INVALID:                   {Num: ER_HDKEY_PRIV_EXTKEY_INVALID, State: "THK00", Message: "hdkey.unable.to.create.private.keys.from.a.public.extened.key"},
-	ER_HDKEY_CHILD_INVALID:                         {Num: ER_HDKEY_CHILD_INVALID, State: "THK00", Message: "hdkey.at.this.index.is.invalid"},
-	ER_HDKEY_CHECKSUM_MISMATCH:                     {Num: ER_HDKEY_CHECKSUM_MISMATCH, State: "THK00", Message: "hdkey.derive.path.invalid[%v]"},
-	ER_HDKEY_DERIVE_PATH_INVALID:                   {Num: ER_HDKEY_DERIVE_PATH_INVALID, State: "THK00", Message: "hdkey.checksum.mismatch"},
 	ER_ADDRESS_CHECKSUM_MISMATCH:                   {Num: ER_ADDRESS_CHECKSUM_MISMATCH, State: "THK00", Message: "address.checksum.mismatch"},
 	ER_ADDRESS_TYPE_UNKNOWN:                        {Num: ER_ADDRESS_TYPE_UNKNOWN, State: "TADDR0", Message: "address.unknown.type[%v]"},
 	ER_ADDRESS_FORMAT_MALFORMED:                    {Num: ER_ADDRESS_FORMAT_MALFORMED, State: "TADDR0", Message: "address.unknown.format[%v]"},

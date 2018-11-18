@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xcore/bip32"
 	"github.com/tokublock/tokucore/xcrypto"
 )
 
@@ -41,7 +42,7 @@ func TestAddressP2PKH(t *testing.T) {
 // P2PKH example
 func TestAddressP2PKHExample(t *testing.T) {
 	seed := []byte("this.is.alice.seed.at.2018")
-	key := NewHDKey(seed)
+	key := bip32.NewHDKey(seed)
 	pubkey := key.PublicKey()
 	{
 		uncompressed := pubkey.SerializeUncompressed()

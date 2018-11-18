@@ -36,6 +36,8 @@ testxvm:
 	go test -v -race ./xvm
 
 testxcore:
+	go test -v -race ./xcore/bip32
+	go test -v -race ./xcore/bip39
 	go test -v -race ./xcore
 
 pkgs =	./xbase\
@@ -44,6 +46,8 @@ pkgs =	./xbase\
 		./xprotocol\
 		./network\
 		./xvm\
+		./xcore/bip32\
+		./xcore/bip39\
 		./xcore
 
 fmt:

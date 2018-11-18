@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func assertNil(err error) {
@@ -22,14 +23,16 @@ func main() {
 	msg := []byte("666...satoshi")
 
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := xcore.NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
-	bohu := bohuHDKey.GetAddress()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := xcore.NewPayToPubKeyHashAddress(bohuPub.Hash160())
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := xcore.NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := xcore.NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	// Output:
 	bohuCoin := xcore.NewCoinBuilder().AddOutput(

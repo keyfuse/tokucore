@@ -10,13 +10,15 @@ import (
 
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func main() {
 	seed := []byte("this.is.bohu.seed.")
-	hdprvkey := xcore.NewHDKey(seed)
+	hdprvkey := bip32.NewHDKey(seed)
 	hdpubkey := hdprvkey.HDPublicKey()
-	addr := hdpubkey.GetAddress()
+	pubkey := hdprvkey.PublicKey()
+	addr := xcore.NewPayToPubKeyHashAddress(pubkey.Hash160())
 
 	fmt.Printf("p2pkh.address(mainet):\t%s\n", addr.ToString(network.MainNet))
 	fmt.Printf("prv.wif(mainet):\t%s\n", hdprvkey.ToString(network.MainNet))

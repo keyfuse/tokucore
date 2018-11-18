@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func TestAddressP2WPKH(t *testing.T) {
@@ -40,7 +41,7 @@ func TestAddressP2WPKH(t *testing.T) {
 // P2WPKH example.
 func TestAddressP2WPKHExample(t *testing.T) {
 	seed := []byte("this.is.alice.seed.at.2018")
-	key := NewHDKey(seed)
+	key := bip32.NewHDKey(seed)
 	pubkey := key.PublicKey()
 	hash := pubkey.Hash160()
 	t.Logf("\thash:%X", hash)

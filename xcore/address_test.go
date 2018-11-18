@@ -12,6 +12,7 @@ import (
 
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xbase"
+	"github.com/tokublock/tokucore/xcore/bip32"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 )
@@ -68,7 +69,7 @@ func TestAddressDecode(t *testing.T) {
 
 func TestAddressExdous(t *testing.T) {
 	for i := 0; i < 5; i++ {
-		key, err := NewHDKeyRand()
+		key, err := bip32.NewHDKeyRand()
 		assert.Nil(t, err)
 		t.Logf("priv:%v", key.ToString(network.TestNet))
 		addr := NewPayToPubKeyHashAddress(key.PublicKey().Hash160())

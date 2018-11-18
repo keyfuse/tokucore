@@ -9,14 +9,14 @@ import (
 	"fmt"
 
 	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 // Bitcoin HD wallet demo.
 func main() {
 	net := network.TestNet
 	seed := []byte("bitcoin blockchain tokublock sandbox")
-	hdkey := xcore.NewHDKey(seed)
+	hdkey := bip32.NewHDKey(seed)
 
 	// Master Private Key.
 	masterprv := hdkey.ToString(net)

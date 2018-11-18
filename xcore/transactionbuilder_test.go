@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xcore/bip32"
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xerror"
 )
@@ -19,15 +20,17 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 	msg := []byte("666...satoshi")
 
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
-	bohu := bohuHDKey.GetAddress()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
 	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	// Prepare the UTXOs.
 	bohuCoin := NewCoinBuilder().AddOutput(
@@ -72,25 +75,26 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 
 func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
-	bohu := bohuHDKey.GetAddress()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
 	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
 
 	// A.
 	seed = []byte("this.is.a.seed.")
-	aHDKey := NewHDKey(seed)
+	aHDKey := bip32.NewHDKey(seed)
 	aPrv := aHDKey.PrivateKey()
 	aPub := aHDKey.PublicKey().Serialize()
 
 	// B.
 	seed = []byte("this.is.b.seed.")
-	bHDKey := NewHDKey(seed)
+	bHDKey := bip32.NewHDKey(seed)
 	bPub := bHDKey.PublicKey().Serialize()
 
 	// C.
 	seed = []byte("this.is.c.seed.")
-	cHDKey := NewHDKey(seed)
+	cHDKey := bip32.NewHDKey(seed)
 	cPrv := cHDKey.PrivateKey()
 	cPub := cHDKey.PublicKey().Serialize()
 
@@ -165,14 +169,15 @@ func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 
 func TestTransactionBuilderP2WPKH(t *testing.T) {
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
-	bohu := bohuHDKey.GetAddress()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
 	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
+	satoshiHDKey := bip32.NewHDKey(seed)
 	satoshiPrv := satoshiHDKey.PrivateKey()
 	satoshiPubKey := satoshiHDKey.PublicKey()
 	satoshi := NewPayToWitnessPubKeyHashAddress(satoshiPubKey.Hash160())
@@ -244,7 +249,7 @@ func TestTransactionBuilderP2WPKH(t *testing.T) {
 
 func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
 	bohuPub := bohuPrv.PubKey()
 
@@ -259,8 +264,9 @@ func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	// Prepare the UTXOs.
 	bohuCoin := NewCoinBuilder().AddOutput(
@@ -291,19 +297,21 @@ func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
 func TestTransactionBuilderHybrid(t *testing.T) {
 	// Alice.
 	seed := []byte("this.is.alice.seed.")
-	aliceHDKey := NewHDKey(seed)
-	alice := aliceHDKey.GetAddress()
-	aliceKey := aliceHDKey.PrivateKey()
+	aliceHDKey := bip32.NewHDKey(seed)
+	alicePrv := aliceHDKey.PrivateKey()
+	alicePub := aliceHDKey.PublicKey()
+	alice := NewPayToPubKeyHashAddress(alicePub.Hash160())
 	aliceCoin := MockP2PKHCoin(aliceHDKey)
 
 	// Bob.
 	seed = []byte("this.is.bob.seed.")
-	bobHDKey := NewHDKey(seed)
-	bobKey := bobHDKey.PrivateKey()
+	bobHDKey := bip32.NewHDKey(seed)
+	bobPrv := bobHDKey.PrivateKey()
+	bobPub := bobHDKey.PublicKey()
 	bobCoin := MockP2PKHCoin(bobHDKey)
 
 	// Alice and bob.
-	redeem, _ := NewPayToMultiSigScript(2, aliceHDKey.PublicKey().Serialize(), bobHDKey.PublicKey().Serialize()).GetLockingScriptBytes()
+	redeem, _ := NewPayToMultiSigScript(2, alicePub.Serialize(), bobPub.Serialize()).GetLockingScriptBytes()
 	aliceBobCoin := MockP2SHCoin(aliceHDKey, bobHDKey, redeem)
 
 	// AD.
@@ -311,20 +319,21 @@ func TestTransactionBuilderHybrid(t *testing.T) {
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	tx, err := NewTransactionBuilder().
 		AddCoins(aliceCoin).
-		AddKeys(aliceKey).
+		AddKeys(alicePrv).
 		To(satoshi, 10000).
 		Then().
 		AddCoins(bobCoin).
-		AddKeys(bobKey).
+		AddKeys(bobPrv).
 		To(satoshi, 9000).
 		Then().
 		AddCoins(aliceBobCoin).
-		AddKeys(aliceKey, bobKey).
+		AddKeys(alicePrv, bobPrv).
 		SetRedeemScript(redeem).
 		To(satoshi, 20000).
 		Then().
@@ -345,19 +354,21 @@ func TestTransactionBuilderHybrid(t *testing.T) {
 func TestTransactionBuilderFees(t *testing.T) {
 	// Alice.
 	seed := []byte("this.is.alice.seed.")
-	aliceHDKey := NewHDKey(seed)
-	alice := aliceHDKey.GetAddress()
-	aliceKey := aliceHDKey.PrivateKey()
+	aliceHDKey := bip32.NewHDKey(seed)
+	alicePrv := aliceHDKey.PrivateKey()
+	alicePub := aliceHDKey.PublicKey()
+	alice := NewPayToPubKeyHashAddress(alicePub.Hash160())
 	aliceCoin := MockP2PKHCoin(aliceHDKey)
 
 	// Bob.
 	seed = []byte("this.is.bob.seed.")
-	bobHDKey := NewHDKey(seed)
-	bobKey := bobHDKey.PrivateKey()
+	bobHDKey := bip32.NewHDKey(seed)
+	bobPrv := bobHDKey.PrivateKey()
+	bobPub := bobHDKey.PublicKey()
 	bobCoin := MockP2PKHCoin(bobHDKey)
 
 	// Alice and bob.
-	redeem, _ := NewPayToMultiSigScript(2, aliceHDKey.PublicKey().Serialize(), bobHDKey.PublicKey().Serialize()).GetLockingScriptBytes()
+	redeem, _ := NewPayToMultiSigScript(2, alicePub.Serialize(), bobPub.Serialize()).GetLockingScriptBytes()
 	aliceBobCoin := MockP2SHCoin(aliceHDKey, bobHDKey, redeem)
 
 	// AD.
@@ -365,20 +376,21 @@ func TestTransactionBuilderFees(t *testing.T) {
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	tx, err := NewTransactionBuilder().
 		AddCoins(aliceCoin).
-		AddKeys(aliceKey).
+		AddKeys(alicePrv).
 		To(satoshi, 10000).
 		Then().
 		AddCoins(bobCoin).
-		AddKeys(bobKey).
+		AddKeys(bobPrv).
 		To(satoshi, 9000).
 		Then().
 		AddCoins(aliceBobCoin).
-		AddKeys(aliceKey, bobKey).
+		AddKeys(alicePrv, bobPrv).
 		SetRedeemScript(redeem).
 		To(satoshi, 20000).
 		Then().
@@ -396,15 +408,17 @@ func TestTransactionBuilderFees(t *testing.T) {
 func TestTransactionBuilderError(t *testing.T) {
 	// Alice.
 	seed := []byte("this.is.alice.seed.")
-	aliceHDKey := NewHDKey(seed)
-	alice := aliceHDKey.GetAddress()
-	aliceKey := aliceHDKey.PrivateKey()
+	aliceHDKey := bip32.NewHDKey(seed)
+	alicePrv := aliceHDKey.PrivateKey()
+	alicePub := aliceHDKey.PublicKey()
+	alice := NewPayToPubKeyHashAddress(alicePub.Hash160())
 	aliceCoin := MockP2PKHCoin(aliceHDKey)
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	tests := []struct {
 		name string
@@ -415,7 +429,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.from.nil",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddKeys(aliceKey).
+					AddKeys(alicePrv).
 					To(satoshi, 10000).
 					Then().
 					SetChange(alice).
@@ -432,7 +446,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			fn: func() error {
 				_, err := NewTransactionBuilder().
 					AddCoins(aliceCoin).
-					AddKeys(aliceKey).
+					AddKeys(alicePrv).
 					Then().
 					SetChange(alice).
 					SendFees(1000).
@@ -448,7 +462,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			fn: func() error {
 				_, err := NewTransactionBuilder().
 					AddCoins(aliceCoin).
-					AddKeys(aliceKey).
+					AddKeys(alicePrv).
 					To(satoshi, 1000).
 					Then().
 					SendFees(1000).
@@ -464,7 +478,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			fn: func() error {
 				_, err := NewTransactionBuilder().
 					AddCoins(aliceCoin).
-					AddKeys(aliceKey).
+					AddKeys(alicePrv).
 					To(satoshi, 10000).
 					Then().
 					SetChange(alice).
@@ -481,7 +495,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			fn: func() error {
 				_, err := NewTransactionBuilder().
 					AddCoins(aliceCoin).
-					AddKeys(aliceKey).
+					AddKeys(alicePrv).
 					To(satoshi, 1000000).
 					Then().
 					SetChange(alice).
@@ -536,30 +550,32 @@ func TestTransactionBuilderError(t *testing.T) {
 func BenchmarkTransactionBuilder(b *testing.B) {
 	// Alice.
 	seed := []byte("this.is.alice.seed.")
-	aliceHDKey := NewHDKey(seed)
-	alice := aliceHDKey.GetAddress()
-	aliceKey := aliceHDKey.PrivateKey()
+	aliceHDKey := bip32.NewHDKey(seed)
+	alicePrv := aliceHDKey.PrivateKey()
+	alicePub := aliceHDKey.PublicKey()
+	alice := NewPayToPubKeyHashAddress(alicePub.Hash160())
 	aliceCoin := MockP2PKHCoin(aliceHDKey)
 
 	// Bob.
 	seed = []byte("this.is.bob.seed.")
-	bobHDKey := NewHDKey(seed)
-	bobKey := bobHDKey.PrivateKey()
+	bobHDKey := bip32.NewHDKey(seed)
+	bobPrv := bobHDKey.PrivateKey()
 	bobCoin := MockP2PKHCoin(bobHDKey)
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	for n := 0; n < b.N; n++ {
 		_, err := NewTransactionBuilder().
 			AddCoins(aliceCoin).
-			AddKeys(aliceKey).
+			AddKeys(alicePrv).
 			To(satoshi, 5000).
 			Then().
 			AddCoins(bobCoin).
-			AddKeys(bobKey).
+			AddKeys(bobPrv).
 			To(satoshi, 5000).
 			Then().
 			SetChange(alice).
@@ -574,30 +590,32 @@ func BenchmarkTransactionBuilder(b *testing.B) {
 func BenchmarkTransactionBuilderSigned(b *testing.B) {
 	// Alice.
 	seed := []byte("this.is.alice.seed.")
-	aliceHDKey := NewHDKey(seed)
-	alice := aliceHDKey.GetAddress()
-	aliceKey := aliceHDKey.PrivateKey()
+	aliceHDKey := bip32.NewHDKey(seed)
+	alicePrv := aliceHDKey.PrivateKey()
+	alicePub := aliceHDKey.PublicKey()
+	alice := NewPayToPubKeyHashAddress(alicePub.Hash160())
 	aliceCoin := MockP2PKHCoin(aliceHDKey)
 
 	// Bob.
 	seed = []byte("this.is.bob.seed.")
-	bobHDKey := NewHDKey(seed)
-	bobKey := bobHDKey.PrivateKey()
+	bobHDKey := bip32.NewHDKey(seed)
+	bobPrv := bobHDKey.PrivateKey()
 	bobCoin := MockP2PKHCoin(bobHDKey)
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := NewHDKey(seed)
-	satoshi := satoshiHDKey.GetAddress()
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	for n := 0; n < b.N; n++ {
 		_, err := NewTransactionBuilder().
 			AddCoins(aliceCoin).
-			AddKeys(aliceKey).
+			AddKeys(alicePrv).
 			To(satoshi, 5000).
 			Then().
 			AddCoins(bobCoin).
-			AddKeys(bobKey).
+			AddKeys(bobPrv).
 			To(satoshi, 5000).
 			Then().
 			SetChange(alice).

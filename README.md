@@ -5,7 +5,7 @@
 
 ## tokucore
 
-*tokucore* is a simple Go (golang) library for creating and manipulating bitcoin data structures like creating keys and addresses (HD/BIP32/SegWit) or parsing, creating and signing transactions, micropayment.
+*tokucore* is a simple Go (golang) library for creating and manipulating bitcoin data structures like creating keys and addresses (HD/BIP32/BIP39/SegWit) or parsing, creating and signing transactions, micropayment.
 
 ## Focus
 
@@ -28,14 +28,15 @@ $ make test
 - [Generate a P2PKH Address](examples/address_p2pkh.go)
 - [Generate a P2SH Address](examples/address_p2sh.go)
 - [Generate a 2-of-3 P2SH MultiSig Address](examples/address_multisig.go)
-- [Generate a SegWit Address](examples/address_p2wpkh.go)
+- [Generate a P2WPKH SegWit Address](examples/address_p2wpkh.go)
 - [Create a P2PKH Transaction](examples/transaction_p2pkh.go)
 - [Create a 2-to-3 P2SH MultiSig Transaction](examples/transaction_multisig.go)
 - [Create a Transaction with an OP_RETURN Output](examples/transaction_opreturn.go)
-- [Create a Transaction with Verify](examples/transaction_p2pkh.go#L52)
-- [Create a Transaction with SegWit Output](examples/transaction_p2wpkh.go#L34)
-- [Create a Transaction with SegWit Input](examples/transaction_p2wpkh.go#L64)
+- [Create a Transaction with Verify](examples/transaction_p2pkh.go)
+- [Create a Transaction with SegWit Output](examples/transaction_p2wpkh.go)
+- [Create a Transaction with SegWit Input](examples/transaction_p2wpkh.go)
 - [HDWallet](examples/hdwallet.go)
+- [Mnemonic](examples/bip39.go)
 - [MicroPayment](examples/micropayment.go)
 
 ## Applications

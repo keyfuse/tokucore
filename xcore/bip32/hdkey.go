@@ -3,10 +3,11 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcore
+package bip32
 
 import (
 	"bytes"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -19,7 +20,6 @@ import (
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xerror"
 )
 
 // Formulas:
@@ -124,7 +124,7 @@ func (k *HDKey) Derive(childIdx uint32) (*HDKey, error) {
 	// extended key.
 	isChildHardened := childIdx >= HardenedKeyStart
 	if !k.isPrivate && isChildHardened {
-		return nil, xerror.NewError(Errors, ER_HDKEY_DERIVE_HARD_FROM_PUBLIC)
+		return nil, fmt.Errorf("hdkey.derive.a.hardened.key.from.public.key.erro")
 	}
 
 	// Split "I" into two 32-byte sequences Il and Ir where:
@@ -167,7 +167,7 @@ func (k *HDKey) DeriveByPath(path string) (*HDKey, error) {
 
 	steps := strings.Split(path, "/")
 	if steps[0] != "m" {
-		return nil, xerror.NewError(Errors, ER_HDKEY_DERIVE_PATH_INVALID, path)
+		return nil, fmt.Errorf("hdkey.derive.path.invalid[%v]", path)
 	}
 
 	hd := k
@@ -181,7 +181,7 @@ func (k *HDKey) DeriveByPath(path string) (*HDKey, error) {
 
 		idx, err := strconv.ParseUint(step, 10, 32)
 		if err != nil {
-			return nil, xerror.NewError(Errors, ER_HDKEY_DERIVE_PATH_INVALID, path)
+			return nil, fmt.Errorf("hdkey.derive.path.invalid[%v]", path)
 		}
 		if isHardened {
 			idx += HardenedKeyStart
@@ -278,17 +278,11 @@ func (k *HDKey) ToString(net *network.Network) string {
 	return xbase.Base58Encode(datas)
 }
 
-// GetAddress -- returns the P2PKH address.
-func (k *HDKey) GetAddress() Address {
-	pubkeyHash := k.PublicKey().Hash160()
-	return NewPayToPubKeyHashAddress(pubkeyHash)
-}
-
 // NewHDKeyFromString -- import WIF string to HDKey.
 func NewHDKeyFromString(wif string) (*HDKey, error) {
 	data := xbase.Base58Decode(wif)
 	if len(data) != (serializedKeyLen + 4) {
-		return nil, xerror.NewError(Errors, ER_HDKEY_SERIALIZED_KEY_WRONG_SIZE)
+		return nil, fmt.Errorf("hdkey.serialized.key.wrong.size.want[%v].got[%v]", serializedKeyLen+4, len(data))
 	}
 
 	// The serialized format is:
@@ -317,7 +311,7 @@ func NewHDKeyFromString(wif string) (*HDKey, error) {
 	cs2 := data[len(data)-4:]
 	for i := range cs1 {
 		if cs1[i] != cs2[i] {
-			return nil, xerror.NewError(Errors, ER_HDKEY_CHECKSUM_MISMATCH)
+			return nil, fmt.Errorf("hdkey.checksum.mismatch")
 		}
 	}
 	return k, nil

@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func assertNil(err error) {
@@ -20,13 +21,14 @@ func assertNil(err error) {
 // Demo for sent coin to Native SegWit address and spending from SegWit address to normal address.
 func main() {
 	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := xcore.NewHDKey(seed)
+	bohuHDKey := bip32.NewHDKey(seed)
 	bohuPrv := bohuHDKey.PrivateKey()
-	bohu := bohuHDKey.GetAddress()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := xcore.NewPayToPubKeyHashAddress(bohuPub.Hash160())
 
 	// Satoshi.
 	seed = []byte("this.is.satoshi.seed.")
-	satoshiHDKey := xcore.NewHDKey(seed)
+	satoshiHDKey := bip32.NewHDKey(seed)
 	satoshiPrv := satoshiHDKey.PrivateKey()
 	satoshiPubKey := satoshiHDKey.PublicKey()
 	satoshi := xcore.NewPayToWitnessPubKeyHashAddress(satoshiPubKey.Hash160())

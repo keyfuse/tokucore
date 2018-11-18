@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func assertNil(err error) {
@@ -40,13 +41,13 @@ func main() {
 	{
 		// satoshi.
 		seed := []byte("this.is.satoshi.seed.")
-		satoshiHDKey := xcore.NewHDKey(seed)
+		satoshiHDKey := bip32.NewHDKey(seed)
 		satoshiPrv := satoshiHDKey.PrivateKey()
 		satoshiPub := satoshiHDKey.PublicKey()
 
 		// starbucks.
 		seed = []byte("this.is.starbucks.seed.")
-		starbucksHDKey := xcore.NewHDKey(seed)
+		starbucksHDKey := bip32.NewHDKey(seed)
 		starbucksPrv := starbucksHDKey.PrivateKey()
 		starbucksPub := starbucksHDKey.PublicKey()
 

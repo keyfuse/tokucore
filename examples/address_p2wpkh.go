@@ -10,11 +10,12 @@ import (
 
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
+	"github.com/tokublock/tokucore/xcore/bip32"
 )
 
 func main() {
 	seed := []byte("this.is.bohu.seed.")
-	hdprvkey := xcore.NewHDKey(seed)
+	hdprvkey := bip32.NewHDKey(seed)
 	pubkey := hdprvkey.PublicKey()
 
 	addr := xcore.NewPayToWitnessPubKeyHashAddress(pubkey.Hash160())

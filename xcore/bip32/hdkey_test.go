@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcore
+package bip32
 
 import (
 	"encoding/hex"
