@@ -50,14 +50,19 @@ func TestEngine(t *testing.T) {
 		unlocking, err := NewScriptBuilder().Load(unlockingstr).Script()
 		assert.Nil(t, err)
 
+		// err.
 		errstr, ok := tst[3].(string)
 		assert.True(t, ok)
 
-		debug, ok := tst[4].(string)
+		// result.
+		result, ok := tst[4].(string)
+		assert.True(t, ok)
+
+		// debug.
+		debug, ok := tst[5].(string)
 		assert.True(t, ok)
 
 		engine := NewEngine()
-
 		if debug == "true" {
 			engine.EnableDebug()
 		} else {
@@ -88,6 +93,11 @@ func TestEngine(t *testing.T) {
 			if err != nil {
 				t.Fatalf("#%s:%v", tname, err)
 			}
+		}
+
+		got := engine.lastStack
+		if result != got {
+			t.Fatalf("#%s:want:%v, got:%v", tname, result, got)
 		}
 	}
 }

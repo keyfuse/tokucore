@@ -111,7 +111,7 @@ func (s *Stack) PeekByteArray(idx int) ([]byte, error) {
 }
 
 // nipN -- removes the nth item on the stack and returns it.
-// Stack :
+// Stack:
 // nipN(0): [... x1 x2 x3] -> [... x1 x2]
 // nipN(1): [... x1 x2 x3] -> [... x1 x3]
 // nipN(2): [... x1 x2 x3] -> [... x2 x3]
@@ -126,9 +126,9 @@ func (s *Stack) nipN(idx int) ([]byte, error) {
 	return so, nil
 }
 
-// DupN duplicates the top N items on the stack.
+// DupN -- duplicates the top N items on the stack.
 //
-// Stack :
+// Stack:
 // DupN(1): [... x1 x2] -> [... x1 x2 x2]
 // DupN(2): [... x1 x2] -> [... x1 x2 x1 x2]
 func (s *Stack) DupN(n int) error {
@@ -139,6 +139,45 @@ func (s *Stack) DupN(n int) error {
 	// This leaves an in-order duplicate of the top n items on the stack.
 	for i := n; i > 0; i-- {
 		so, err := s.PeekByteArray(n - 1)
+		if err != nil {
+			return err
+		}
+		s.PushByteArray(so)
+	}
+	return nil
+}
+
+// DropN -- removes the top N items from the stack.
+// Stack:
+// DropN(1): [... x1 x2] -> [... x1]
+// DropN(2): [... x1 x2] -> [...]
+func (s *Stack) DropN(n int32) error {
+	if n < 1 {
+		return xerror.NewError(Errors, ER_SCRIPT_STACK_OPERATION_INVALID, "DropN", n)
+	}
+
+	for ; n > 0; n-- {
+		_, err := s.PopByteArray()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SwapN -- swaps the top N items on the stack with those below them.
+// Stack:
+// SwapN(1): [... x1 x2] -> [... x2 x1]
+// SwapN(2): [... x1 x2 x3 x4] -> [... x3 x4 x1 x2]
+func (s *Stack) SwapN(n int32) error {
+	if n < 1 {
+		return xerror.NewError(Errors, ER_SCRIPT_STACK_OPERATION_INVALID, "SwapN", n)
+	}
+
+	entry := 2*n - 1
+	for i := n; i > 0; i-- {
+		// Swap 2n-1th entry to top.
+		so, err := s.nipN(int(entry))
 		if err != nil {
 			return err
 		}

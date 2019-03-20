@@ -200,6 +200,9 @@ var opcodes = map[byte]opcode{
 	OP_2DUP: {OP_2DUP, "OP_2DUP", 1, op2Dup},
 	OP_3DUP: {OP_3DUP, "OP_3DUP", 1, op3Dup},
 	OP_DUP:  {OP_DUP, "OP_DUP", 1, opDup},
+	OP_DROP: {OP_DROP, "OP_DROP", 1, opDrop},
+	OP_SIZE: {OP_SIZE, "OP_SIZE", 1, opSize},
+	OP_SWAP: {OP_SWAP, "OP_SWAP", 1, opSwap},
 
 	// Logic opcodes.
 	OP_EQUAL:       {OP_EQUAL, "OP_EQUAL", 1, opEqual},

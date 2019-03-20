@@ -30,6 +30,7 @@ type Engine struct {
 	reader      *ScriptReader
 	instruction *Instruction // Current instruction
 	traces      []Trace
+	lastStack   string // Last stack.
 }
 
 // NewEngine -- creates new Engine.
@@ -139,15 +140,18 @@ func (vm *Engine) execute(program []byte, final bool) error {
 		if done {
 			break
 		}
+
+		cur := vm.dstack.String()
 		if vm.debug && final && vm.instruction != nil {
 			trace := Trace{
 				Step:      vm.pc,
 				Executed:  vm.instruction.op.name,
-				Stack:     vm.dstack.String(),
+				Stack:     cur,
 				Remaining: vm.reader.DisasmRemaining(),
 			}
 			vm.traces = append(vm.traces, trace)
 		}
+		vm.lastStack = cur
 	}
 
 	if final {
