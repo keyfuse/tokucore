@@ -34,19 +34,19 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 
 	// Prepare the UTXOs.
 	bohuCoin := NewCoinBuilder().AddOutput(
-		"5af1520f1d3e818fca695c2a903baa4a7eec4954f0b35aa01be1f2c1d2cfd802",
-		0,
-		129990000,
+		"bde974a17f9ab1cfbbfb00bb4561e27156ebd65a4163ea0f014e9114d5b65556",
+		1,
+		6762017,
 		"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
 	).ToCoins()[0]
 
 	tx, err := NewTransactionBuilder().
 		AddCoins(bohuCoin).
 		AddKeys(bohuPrv).
-		To(satoshi, 666666).
+		To(satoshi, 3000).
 		Then().
 		SetChange(bohu).
-		SendFees(10000).
+		SendFees(1000).
 		Then().
 		AddPushData(msg).
 		Sign().
@@ -62,6 +62,7 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 
 	assert.Equal(t, tx.BaseSize(), tx.Size())
 	assert.Equal(t, tx.Vsize(), tx.Size())
+	assert.Equal(t, "092ddeb0fa8205a06494f2cf83afda0377479c86065e60dea5ae347468b27361", tx.ID())
 
 	t.Logf("basesize:%+v", tx.BaseSize())
 	t.Logf("witnesssize:%+v", tx.WitnessSize())
@@ -100,17 +101,17 @@ func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 
 	// Redeem script.
 	redeemScript := NewPayToMultiSigScript(2, aPub, bPub, cPub)
-	multi := redeemScript.GetAddress()
-	t.Logf("multi.addr:%v", multi.ToString(network.TestNet))
 	redeem, _ := redeemScript.GetLockingScriptBytes()
 	t.Logf("redeem.hex:%x", redeem)
+	multi := NewPayToScriptHashAddress(xcrypto.Hash160(redeem))
+	t.Logf("multi.addr:%v", multi.ToString(network.TestNet))
 
 	// Funding.
 	{
 		bohuCoin := NewCoinBuilder().AddOutput(
-			"b470aab9f18259b71fc7cb930929bedb6f6a15f7447219e7216db9a42c782984",
-			0,
-			129995000,
+			"092ddeb0fa8205a06494f2cf83afda0377479c86065e60dea5ae347468b27361",
+			1,
+			6758017,
 			"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
 		).ToCoins()[0]
 
@@ -133,13 +134,14 @@ func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 		t.Logf("txid:%v", tx.ID())
 		signedTx := tx.Serialize()
 		t.Logf("funding.signed.tx:%x", signedTx)
+		assert.Equal(t, "b2e955c95a6ee5752df1477a5936443ead0297ec697475ce6f356cdc6e2301a9", tx.ID())
 	}
 
 	// Spending.
 	{
 		multiCoin := NewCoinBuilder().AddOutput(
-			"5af1520f1d3e818fca695c2a903baa4a7eec4954f0b35aa01be1f2c1d2cfd802",
-			1,
+			"b2e955c95a6ee5752df1477a5936443ead0297ec697475ce6f356cdc6e2301a9",
+			0,
 			4000,
 			"a914210a461ced66d7540ad2f4649b49dbed7c9fcc2887",
 		).ToCoins()[0]
@@ -164,6 +166,7 @@ func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 		signedTx := tx.Serialize()
 		t.Logf("txid:%v", tx.ID())
 		t.Logf("spending.signed.tx:%x", signedTx)
+		assert.Equal(t, "a28312ed5f5b5d164044f08f3a62e412aeb396043a1ec531c18994ff145ea793", tx.ID())
 	}
 }
 
@@ -207,6 +210,7 @@ func TestTransactionBuilderP2WPKH(t *testing.T) {
 		// Verify.
 		err = tx.Verify()
 		assert.Nil(t, err)
+		assert.Equal(t, "c37c3154ae611cfd9a57e684f0c12d51491d09060c643adc292565884e947b2b", tx.ID())
 
 		t.Logf("fund:%v", tx.ToString())
 		t.Logf("fund.txid:%v", tx.ID())
@@ -244,6 +248,105 @@ func TestTransactionBuilderP2WPKH(t *testing.T) {
 		t.Logf("spend.witnessid:%v", tx.WitnessID())
 		t.Logf("spend.tx:%x", tx.Serialize())
 		t.Logf("actualsize:%v", len(tx.Serialize()))
+		assert.Equal(t, "80cd5fca2589cd97d3da1119214ed339d5284ce068e22f1eb9f32ee99a17d4bf", tx.ID())
+	}
+}
+
+func TestTransactionBuilderP2WSH(t *testing.T) {
+	seed := []byte("this.is.bohu.seed.")
+	bohuHDKey := bip32.NewHDKey(seed)
+	bohuPrv := bohuHDKey.PrivateKey()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
+
+	// A.
+	seed = []byte("this.is.a.seed.")
+	aHDKey := bip32.NewHDKey(seed)
+	aPrv := aHDKey.PrivateKey()
+	aPub := aHDKey.PublicKey().Serialize()
+
+	// B.
+	seed = []byte("this.is.b.seed.")
+	bHDKey := bip32.NewHDKey(seed)
+	bPub := bHDKey.PublicKey().Serialize()
+
+	// C.
+	seed = []byte("this.is.c.seed.")
+	cHDKey := bip32.NewHDKey(seed)
+	cPrv := cHDKey.PrivateKey()
+	cPub := cHDKey.PublicKey().Serialize()
+
+	// Redeem script.
+	redeemScript := NewPayToMultiSigScript(2, aPub, bPub, cPub)
+	redeem, _ := redeemScript.GetLockingScriptBytes()
+	t.Logf("redeem.hex:%x", redeem)
+	multi := NewPayToWitnessScriptHashAddress(xcrypto.Sha256(redeem))
+	t.Logf("multi.addr:%v", multi.ToString(network.TestNet))
+	assert.Equal(t, "tb1qrrf2qzw8stxkwhurtamy7wkl3a24vhgu0l3gcf66a8hl5dk9napqtap6rf", multi.ToString(network.TestNet))
+
+	// Funding.
+	{
+		bohuCoin := NewCoinBuilder().AddOutput(
+			"b2e955c95a6ee5752df1477a5936443ead0297ec697475ce6f356cdc6e2301a9",
+			1,
+			6753017,
+			"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
+		).ToCoins()[0]
+
+		tx, err := NewTransactionBuilder().
+			AddCoins(bohuCoin).
+			AddKeys(bohuPrv).
+			To(multi, 4000).
+			Then().
+			SetChange(bohu).
+			Then().
+			Sign().
+			BuildTransaction()
+		assert.Nil(t, err)
+
+		// Verify.
+		err = tx.Verify()
+		assert.Nil(t, err)
+
+		assert.Equal(t, "02f96826dbd8bfec2e88603d110dfef1872809debfd84c12188ab94097da3998", tx.ID())
+
+		t.Logf("%v", tx.ToString())
+		t.Logf("txid:%v", tx.ID())
+		signedTx := tx.Serialize()
+		t.Logf("funding.signed.tx:%x", signedTx)
+	}
+
+	// Spending.
+	{
+		multiCoin := NewCoinBuilder().AddOutput(
+			"02f96826dbd8bfec2e88603d110dfef1872809debfd84c12188ab94097da3998",
+			0,
+			4000,
+			"002018d2a009c782cd675f835f764f3adf8f55565d1c7fe28c275ae9effa36c59f42",
+		).ToCoins()[0]
+
+		tx, err := NewTransactionBuilder().
+			AddCoins(multiCoin).
+			AddKeys(aPrv, cPrv).
+			SetRedeemScript(redeem).
+			To(bohu, 1000).
+			Then().
+			SetChange(bohu).
+			Then().
+			Sign().
+			BuildTransaction()
+		assert.Nil(t, err)
+
+		// Verify.
+		err = tx.Verify()
+		assert.Nil(t, err)
+
+		t.Logf("%v", tx.ToString())
+		signedTx := tx.Serialize()
+		t.Logf("txid:%v", tx.ID())
+		t.Logf("spending.signed.tx:%x", signedTx)
+		assert.Equal(t, "70eaf6275e59e780b933d88ea87b0d1f3135ea2ecb6add971f975155ec80d918", tx.ID())
 	}
 }
 
@@ -257,7 +360,7 @@ func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
 	pubHash := xcrypto.Hash160(bohuPub.SerializeUncompressed())
 	script := NewPayToPubKeyHashScript(pubHash)
 	bohu := script.GetAddress()
-	locking, err := script.GetLockingScriptBytes()
+	locking, err := script.GetRawLockingScriptBytes()
 	assert.Nil(t, err)
 
 	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))

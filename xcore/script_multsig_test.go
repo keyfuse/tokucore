@@ -114,7 +114,7 @@ func TestMultiSigScriptDemo(t *testing.T) {
 	assert.Nil(t, err)
 	t.Logf("2-of-3.script:%s", xvm.DisasmString(redeem))
 
-	p2sh, err := NewPayToScriptHashScript(xcrypto.Hash160(redeem)).GetLockingScriptBytes()
+	p2sh, err := NewPayToScriptHashScript(xcrypto.Hash160(redeem)).GetRawLockingScriptBytes()
 	assert.Nil(t, err)
 	t.Logf("locking:%s", xvm.DisasmString(p2sh))
 }

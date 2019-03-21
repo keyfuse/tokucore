@@ -72,7 +72,7 @@ func TestEngine(t *testing.T) {
 		hasherFn := func(hashType byte) []byte {
 			return xcrypto.DoubleSha256([]byte{0x01, 0x02, 0x03, 0x04})
 		}
-		engine.SetHasher(hasherFn)
+		engine.SetSigHashFn(hasherFn)
 
 		// Verifier function.
 		verifierFn := func(hash []byte, signature []byte, pubkey []byte) error {
@@ -82,7 +82,7 @@ func TestEngine(t *testing.T) {
 			}
 			return xcrypto.Verify(hash, signature, pub)
 		}
-		engine.SetVerifier(verifierFn)
+		engine.SetSigVerifyFn(verifierFn)
 
 		err = engine.Verify(unlocking, locking)
 		engine.PrintTrace()

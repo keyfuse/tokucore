@@ -19,7 +19,7 @@ func TestScriptP2SH(t *testing.T) {
 
 	hex, _ := hex.DecodeString("14836dbe7f38c5ac3d49e8d790af808a4ee9edcf")
 	script := NewPayToScriptHashScript(hex)
-	locking, err := script.GetLockingScriptBytes()
+	locking, err := script.GetRawLockingScriptBytes()
 	assert.Nil(t, err)
 	assert.Equal(t, outputScriptBytes, locking)
 	assert.Equal(t, outputScriptString, xvm.DisasmString(locking))

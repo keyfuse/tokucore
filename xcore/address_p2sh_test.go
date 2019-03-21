@@ -46,7 +46,7 @@ func TestAddressP2SHExample1(t *testing.T) {
 	redeemScript, err := multisig.GetLockingScriptBytes()
 	assert.Nil(t, err)
 	t.Logf("p2sh.redeem.script:%v", xvm.DisasmString(redeemScript))
-	addr := multisig.GetAddress()
+	addr := NewPayToScriptHashAddress(xcrypto.Hash160(redeemScript))
 	t.Logf("p2sh.address.testnte:%v", addr.ToString(network.TestNet))
 	t.Logf("p2sh.address.mainnet:%v", addr.ToString(network.MainNet))
 }

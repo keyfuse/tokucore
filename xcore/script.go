@@ -35,36 +35,60 @@ type PubKeySign struct {
 type Script interface {
 	// GetAddress used to get the Address interface.
 	GetAddress() Address
-	// GetLockingScriptBytes used to get locking script bytes.
-	GetLockingScriptBytes() ([]byte, error)
+
+	// GetRawLockingScriptBytes -- used to get locking script bytes.
+	GetRawLockingScriptBytes() ([]byte, error)
+
+	// GetFinalLockingScriptBytes -- used to get the re-written locking for witness.
+	// If txin is witness, returns re-written locking script code.
+	// If txin is non-witness, returns same as GetLockingScriptBytes.
+	GetFinalLockingScriptBytes(redeem []byte) ([]byte, error)
+
+	// GetRawUnlockingScriptBytes -- used to get raw unlocking script bytes.
+	GetRawUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([]byte, error)
+
+	// GetWitnessUnlockingScriptBytes -- used to get witness script bytes.
+	GetWitnessUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([][]byte, error)
+
+	// GetWitnessScriptCode -- used to get the witness script for sighash of this txin.
+	// If txin is non-witness, returns nil.
+	GetWitnessScriptCode([]byte) ([]byte, error)
+
+	// WitnessToUnlockingScriptBytes -- converts witness slice to unlocking script.
+	// For txn deserialize from hex.
+	WitnessToUnlockingScriptBytes(witness [][]byte) ([]byte, error)
 }
 
-// GetScriptClass -- gets the script class.
-func GetScriptClass(script []byte) ScriptClass {
+// ParseLockingScript -- parse the locking script to script instance.
+func ParseLockingScript(script []byte) (Script, error) {
 	instrs, err := xvm.NewScriptReader(script).AllInstructions()
 	if err != nil {
-		return NonStandardTy
+		return nil, err
 	}
 	switch {
 	case isPubkeyHash(instrs):
-		return PubKeyHashTy
+		return NewPayToPubKeyHashScript(instrs[2].Data()), nil
 	case isScriptHash(instrs):
-		return ScriptHashTy
+		return NewPayToScriptHashScript(instrs[1].Data()), nil
 	case isWitnessPubKeyHash(instrs):
-		return WitnessV0PubKeyHashTy
+		return NewPayToWitnessPubKeyHashScript(instrs[1].Data()), nil
+	case isWitnessScriptHash(instrs):
+		return NewPayToWitnessScriptHashScript(instrs[1].Data()), nil
 	}
-	return NonStandardTy
+	return nil, xerror.NewError(Errors, ER_SCRIPT_TYPE_UNKNOWN, xvm.DisasmString(script))
 }
 
 // PayToAddrScript -- returns the locking script by address type.
 func PayToAddrScript(addr Address) ([]byte, error) {
 	switch addr.(type) {
 	case *PayToPubKeyHashAddress:
-		return NewPayToPubKeyHashScript(addr.Hash160()).GetLockingScriptBytes()
+		return NewPayToPubKeyHashScript(addr.Hash160()).GetRawLockingScriptBytes()
 	case *PayToScriptHashAddress:
-		return NewPayToScriptHashScript(addr.Hash160()).GetLockingScriptBytes()
+		return NewPayToScriptHashScript(addr.Hash160()).GetRawLockingScriptBytes()
 	case *PayToWitnessPubKeyHashAddress:
-		return NewPayToWitnessPubKeyHashScript(addr.Hash160()).GetLockingScriptBytes()
+		return NewPayToWitnessPubKeyHashScript(addr.Hash160()).GetRawLockingScriptBytes()
+	case *PayToWitnessScriptHashAddress:
+		return NewPayToWitnessScriptHashScript(addr.Hash160()).GetRawLockingScriptBytes()
 	}
 	return nil, xerror.NewError(Errors, ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED, addr)
 }

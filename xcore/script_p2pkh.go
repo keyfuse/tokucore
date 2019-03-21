@@ -26,8 +26,7 @@ func (s *PayToPubKeyHashScript) GetAddress() Address {
 	return NewPayToPubKeyHashAddress(s.hash)
 }
 
-// GetLockingScriptBytes --
-// returns the locking script bytes.
+// GetRawLockingScriptBytes -- used to get locking script bytes.
 //
 // OP_DUP OP_HASH160 <PubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
 // Format:
@@ -37,7 +36,7 @@ func (s *PayToPubKeyHashScript) GetAddress() Address {
 // - 20 bytes pubkey hash
 // - OP_EQUALVERIFY
 // - OP_CHECKSIG
-func (s *PayToPubKeyHashScript) GetLockingScriptBytes() ([]byte, error) {
+func (s *PayToPubKeyHashScript) GetRawLockingScriptBytes() ([]byte, error) {
 	return xvm.NewScriptBuilder().
 		AddOp(xvm.OP_DUP).
 		AddOp(xvm.OP_HASH160).
@@ -45,6 +44,37 @@ func (s *PayToPubKeyHashScript) GetLockingScriptBytes() ([]byte, error) {
 		AddOp(xvm.OP_EQUALVERIFY).
 		AddOp(xvm.OP_CHECKSIG).
 		Script()
+}
+
+// GetFinalLockingScriptBytes -- used to get the re-written locking for witness.
+// Same as raw.
+func (s *PayToPubKeyHashScript) GetFinalLockingScriptBytes(redeem []byte) ([]byte, error) {
+	return s.GetRawLockingScriptBytes()
+}
+
+// GetRawUnlockingScriptBytes -- returns the unlocking script bytes.
+// unlocking: <sig> <pubkey>
+// witness:   (empty)
+func (s *PayToPubKeyHashScript) GetRawUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([]byte, error) {
+	builder := xvm.NewScriptBuilder()
+	unlocking, err := builder.AddData(signs[0].Signature).AddData(signs[0].PubKey).Script()
+	return unlocking, err
+}
+
+// GetWitnessUnlockingScriptBytes -- used to get witness script bytes.
+func (s *PayToPubKeyHashScript) GetWitnessUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([][]byte, error) {
+	return nil, nil
+}
+
+// GetWitnessScriptCode -- used to get the unlocking script bytes of witness program.
+func (s *PayToPubKeyHashScript) GetWitnessScriptCode(redeem []byte) ([]byte, error) {
+	return nil, nil
+}
+
+// WitnessToUnlockingScriptBytes -- converts witness slice to unlocking script.
+// For txn deserialize from hex.
+func (s *PayToPubKeyHashScript) WitnessToUnlockingScriptBytes(witness [][]byte) ([]byte, error) {
+	return nil, nil
 }
 
 // isPubkeyHash --

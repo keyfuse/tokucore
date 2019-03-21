@@ -13,6 +13,6 @@ import (
 
 func TestScriptClass(t *testing.T) {
 	script := []byte{0x01}
-	class := GetScriptClass(script)
-	assert.Equal(t, NonStandardTy, class)
+	_, err := ParseLockingScript(script)
+	assert.NotNil(t, err)
 }

@@ -51,7 +51,7 @@ func TestTransactionRaw(t *testing.T) {
 	// Output.
 	scriptHash, err := hex.DecodeString("b53bb0dc1db8c8d803e3e39f784d42e4737ffa0d")
 	assert.Nil(t, err)
-	lockingScript, err := NewPayToScriptHashScript(scriptHash).GetLockingScriptBytes()
+	lockingScript, err := NewPayToScriptHashScript(scriptHash).GetRawLockingScriptBytes()
 	assert.Nil(t, err)
 	tx.AddOutput(&TxOut{
 		Value:  249900000,

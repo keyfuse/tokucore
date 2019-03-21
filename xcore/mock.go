@@ -21,7 +21,7 @@ func MockP2PKHCoin(hdKey *bip32.HDKey) *Coin {
 	txid := make([]byte, 32)
 	rand.Read(txid)
 
-	script, _ := NewPayToPubKeyHashScript(hdKey.PublicKey().Hash160()).GetLockingScriptBytes()
+	script, _ := NewPayToPubKeyHashScript(hdKey.PublicKey().Hash160()).GetRawLockingScriptBytes()
 	return &Coin{
 		txID:   fmt.Sprintf("%x", txid),
 		n:      0,
@@ -38,7 +38,7 @@ func MockP2SHCoin(alice *bip32.HDKey, bob *bip32.HDKey, redeem []byte) *Coin {
 
 	txid := make([]byte, 32)
 	rand.Read(txid)
-	script, _ := NewPayToScriptHashScript(redeemScript).GetLockingScriptBytes()
+	script, _ := NewPayToScriptHashScript(redeemScript).GetRawLockingScriptBytes()
 	return &Coin{
 		txID:   fmt.Sprintf("%x", txid),
 		n:      1,

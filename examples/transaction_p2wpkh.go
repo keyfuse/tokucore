@@ -18,7 +18,7 @@ func assertNil(err error) {
 	}
 }
 
-// Demo for sent coin to Native SegWit address and spending from SegWit address to normal address.
+// Demo for sent coin to Native SegWit P2WPKH address and spending from SegWit address to normal address.
 func main() {
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := bip32.NewHDKey(seed)

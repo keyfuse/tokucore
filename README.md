@@ -29,15 +29,17 @@ $ make test
 - [Generate a P2SH Address](examples/address_p2sh.go)
 - [Generate a 2-of-3 P2SH MultiSig Address](examples/address_multisig.go)
 - [Generate a P2WPKH SegWit Address](examples/address_p2wpkh.go)
+- [Generate a P2WSH  SegWit Address](examples/address_p2wsh.go)
 - [Create a P2PKH Transaction](examples/transaction_p2pkh.go)
 - [Create a 2-to-3 P2SH MultiSig Transaction](examples/transaction_multisig.go)
 - [Create a Transaction with an OP_RETURN Output](examples/transaction_opreturn.go)
 - [Create a Transaction with Verify](examples/transaction_p2pkh.go)
-- [Create a Transaction with SegWit Output](examples/transaction_p2wpkh.go)
-- [Create a Transaction with SegWit Input](examples/transaction_p2wpkh.go)
+- [Create a Transaction with P2WPKH Segwit Output](examples/transaction_p2wpkh.go)
+- [Create a Transaction with P2WPKH SegWit Input](examples/transaction_p2wpkh.go)
+- [Create a Transaction with P2WSH  SegWit Output](examples/transaction_p2wsh.go)
+- [Create a Transaction with P2WSH  SegWit Input](examples/transaction_p2wsh.go)
 - [HDWallet](examples/hdwallet.go)
 - [Mnemonic](examples/bip39.go)
-- [MicroPayment](examples/micropayment.go)
 
 ## Applications
 

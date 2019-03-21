@@ -13,11 +13,11 @@ import (
 	"github.com/tokublock/tokucore/xerror"
 )
 
-// Hasher -- hash function for checksig.
-type Hasher func(hashType byte) []byte
+// SigHashFn -- hash function for checksig.
+type SigHashFn func(hashType byte) []byte
 
-// Verifier -- verify function for checksig.
-type Verifier func(hash []byte, signature []byte, pubkey []byte) error
+// SigVerifyFn -- verify function for checksig.
+type SigVerifyFn func(hash []byte, signature []byte, pubkey []byte) error
 
 // Engine -- the virtual matchine to execute the bitcoin scripts.
 type Engine struct {
@@ -25,12 +25,13 @@ type Engine struct {
 	debug       bool
 	dstack      *Stack // Data stack.
 	cstack      []int  // Control stack.
-	hasher      Hasher
-	verifier    Verifier
+	sigHasher   SigHashFn
+	sigVerifier SigVerifyFn
 	reader      *ScriptReader
 	instruction *Instruction // Current instruction
 	traces      []Trace
 	lastStack   string // Last stack.
+	lastOp      string // Last opcode.
 }
 
 // NewEngine -- creates new Engine.
@@ -50,14 +51,14 @@ func (vm *Engine) DisableDebug() {
 	vm.debug = false
 }
 
-// SetHasher -- set hasher function.
-func (vm *Engine) SetHasher(fn Hasher) {
-	vm.hasher = fn
+// SetSigHashFn -- set hasher function.
+func (vm *Engine) SetSigHashFn(fn SigHashFn) {
+	vm.sigHasher = fn
 }
 
-// SetVerifier -- set verifier function.
-func (vm *Engine) SetVerifier(fn Verifier) {
-	vm.verifier = fn
+// SetSigVerifyFn -- set verify function.
+func (vm *Engine) SetSigVerifyFn(fn SigVerifyFn) {
+	vm.sigVerifier = fn
 }
 
 // Step --
@@ -152,6 +153,7 @@ func (vm *Engine) execute(program []byte, final bool) error {
 			vm.traces = append(vm.traces, trace)
 		}
 		vm.lastStack = cur
+		vm.lastOp = vm.instruction.op.name
 	}
 
 	if final {

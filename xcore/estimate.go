@@ -54,7 +54,7 @@ func EstimateSize(txins []*TxIn, txouts []*TxOut) int64 {
 			txinNums := len(txins)
 			baseSize += xbase.VarIntSerializeSize(uint64(txinNums))
 			for _, in := range txins {
-				if !in.HasWitness {
+				if !in.HasWitness() {
 					baseSize += inputP2PKHSize
 				}
 			}
@@ -76,7 +76,7 @@ func EstimateSize(txins []*TxIn, txouts []*TxOut) int64 {
 	{
 		var hasWitness bool
 		for _, in := range txins {
-			if in.HasWitness {
+			if in.HasWitness() {
 				hasWitness = true
 				break
 			}
@@ -84,7 +84,7 @@ func EstimateSize(txins []*TxIn, txouts []*TxOut) int64 {
 
 		if hasWitness {
 			for _, in := range txins {
-				if in.HasWitness {
+				if in.HasWitness() {
 					// Witness slice varlen.
 					witnessSize += xbase.VarIntSerializeSize(uint64(2))
 					witnessSize += xbase.VarIntSerializeSize(uint64(inputWitnessSignatureSize))

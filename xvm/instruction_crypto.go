@@ -26,11 +26,11 @@ func opHash160(vm *Engine) error {
 // Stack:
 // [... signature pubkey] -> [... bool]
 func opCheckSig(vm *Engine) error {
-	if vm.hasher == nil {
-		return xerror.NewError(Errors, ER_VM_EXEC_OPCODE_FAILED, "opCheckSig:vm.hasher.func.is.nil")
+	if vm.sigHasher == nil {
+		return xerror.NewError(Errors, ER_VM_EXEC_OPCODE_FAILED, "opCheckSig:vm.signature.hasher.func.is.nil")
 	}
-	if vm.verifier == nil {
-		return xerror.NewError(Errors, ER_VM_EXEC_OPCODE_FAILED, "opCheckSig:vm.verifier.func.is.nil")
+	if vm.sigVerifier == nil {
+		return xerror.NewError(Errors, ER_VM_EXEC_OPCODE_FAILED, "opCheckSig:vm.signature.verifier.func.is.nil")
 	}
 
 	pubkey, err := vm.dstack.PopByteArray()
@@ -48,8 +48,8 @@ func opCheckSig(vm *Engine) error {
 
 	hashType := sig[len(sig)-1]
 	sigDER := sig[:len(sig)-1]
-	hash := vm.hasher(hashType)
-	if err := vm.verifier(hash, sigDER, pubkey); err != nil {
+	hash := vm.sigHasher(hashType)
+	if err := vm.sigVerifier(hash, sigDER, pubkey); err != nil {
 		vm.dstack.PushBool(false)
 		return nil
 	}
@@ -121,8 +121,8 @@ func opCheckMultiSig(vm *Engine) error {
 		hashType := sig[len(sig)-1]
 		sigDER := sig[:len(sig)-1]
 
-		hash := vm.hasher(hashType)
-		if err := vm.verifier(hash, sigDER, pubKeys[pubKeyIdx]); err == nil {
+		hash := vm.sigHasher(hashType)
+		if err := vm.sigVerifier(hash, sigDER, pubKeys[pubKeyIdx]); err == nil {
 			sigIdx++
 		}
 		pubKeyIdx++

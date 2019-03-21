@@ -42,6 +42,8 @@ func DecodeAddress(addr string, net *network.Network) (Address, error) {
 			switch len(witnessProgram) {
 			case 20:
 				return NewPayToWitnessPubKeyHashAddress(witnessProgram), nil
+			case 32:
+				return NewPayToWitnessScriptHashAddress(witnessProgram), nil
 			}
 		}
 	}
