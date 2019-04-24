@@ -26,6 +26,9 @@ testxcrypto:
 testxerror:
 	go test -v -race ./xerror
 
+testxrpc:
+	go test -v -race ./xrpc
+
 testxprotocol:
 	go test -v -race ./xprotocol
 
@@ -40,9 +43,11 @@ testxcore:
 	go test -v -race ./xcore/bip39
 	go test -v -race ./xcore
 
+
 pkgs =	./xbase\
 		./xcrypto\
 		./xerror\
+		./xrpc\
 		./xprotocol\
 		./network\
 		./xvm\
