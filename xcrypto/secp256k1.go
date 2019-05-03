@@ -45,24 +45,19 @@ func (curve *secp256k1Curve) Params() *elliptic.CurveParams {
 	return &curve.CurveParams
 }
 
-// IsOnCurve -- check the point (x,y) is on the curve or not
+// IsOnCurve -- check the point (x,y) is on the curve or not.
 func (curve *secp256k1Curve) IsOnCurve(x, y *big.Int) bool {
+	// y² = x³ + b
 	var y2, x3 big.Int
 
-	y2.Mul(y, y)
-	y2.Mod(&y2, curve.P)
+	y2.Mul(y, y)         //y²
+	y2.Mod(&y2, curve.P) //y²%P
 
-	x3.Mul(x, x)
-	x3.Mul(&x3, x)
-	x3.Add(&x3, curve.B)
-	x3.Mod(&x3, curve.P)
+	x3.Mul(x, x)         //x²
+	x3.Mul(&x3, x)       //x³
+	x3.Add(&x3, curve.B) //x³+B
+	x3.Mod(&x3, curve.P) //(x³+B)%P
 	return x3.Cmp(&y2) == 0
-}
-
-// Double -- do point doubling
-func (curve *secp256k1Curve) Double(x1, y1 *big.Int) (*big.Int, *big.Int) {
-	z1 := zForAffine(x1, y1)
-	return curve.affineFromJacobian(curve.doubleJacobian(x1, y1, z1))
 }
 
 // zForAffine --
@@ -78,8 +73,12 @@ func zForAffine(x, y *big.Int) *big.Int {
 }
 
 // affineFromJacobian --
-// reverses the Jacobian transform. See the comment at the
-// top of the file. If the point is ∞ it returns 0, 0.
+// reverses the Jacobian transform. If the point is ∞ it returns 0, 0.
+// For a given (x, y) position on the curve, the Jacobian coordinates are (x1, y1, z1)
+// where x = x1/z1² and y = y1/z1³. The greatest speedups come when the whole
+// calculation can be performed within the transform (as in ScalarMult and
+// ScalarBaseMult). But even for Add and Double, it's faster to apply and
+// reverse the transform than to operate in affine coordinates.
 func (curve *secp256k1Curve) affineFromJacobian(x, y, z *big.Int) (xOut, yOut *big.Int) {
 	if z.Sign() == 0 {
 		return new(big.Int), new(big.Int)
@@ -96,6 +95,7 @@ func (curve *secp256k1Curve) affineFromJacobian(x, y, z *big.Int) (xOut, yOut *b
 	return
 }
 
+// Add -- returns the sum of (x1,y1) and (x2,y2).
 func (curve *secp256k1Curve) Add(x1, y1, x2, y2 *big.Int) (*big.Int, *big.Int) {
 	z1 := zForAffine(x1, y1)
 	z2 := zForAffine(x2, y2)
@@ -121,16 +121,16 @@ func (curve *secp256k1Curve) addJacobian(x1, y1, z1, x2, y2, z2 *big.Int) (*big.
 		return x3, y3, z3
 	}
 
-	z1z1 := new(big.Int).Mul(z1, z1)
-	z1z1.Mod(z1z1, curve.P)
-	z2z2 := new(big.Int).Mul(z2, z2)
-	z2z2.Mod(z2z2, curve.P)
+	z1z1 := new(big.Int).Mul(z1, z1) //z1²
+	z1z1.Mod(z1z1, curve.P)          //z1²%P
+	z2z2 := new(big.Int).Mul(z2, z2) //z2²
+	z2z2.Mod(z2z2, curve.P)          //z2²%P
 
-	u1 := new(big.Int).Mul(x1, z2z2)
-	u1.Mod(u1, curve.P)
-	u2 := new(big.Int).Mul(x2, z1z1)
-	u2.Mod(u2, curve.P)
-	h := new(big.Int).Sub(u2, u1)
+	u1 := new(big.Int).Mul(x1, z2z2) //x1*z2²
+	u1.Mod(u1, curve.P)              //(x1*z2²)%P
+	u2 := new(big.Int).Mul(x2, z1z1) //x2*z1²
+	u2.Mod(u2, curve.P)              //(x2*z1²)%P
+	h := new(big.Int).Sub(u2, u1)    //u2-u1
 	xEqual := h.Sign() == 0
 	if h.Sign() == -1 {
 		h.Add(h, curve.P)
@@ -153,7 +153,7 @@ func (curve *secp256k1Curve) addJacobian(x1, y1, z1, x2, y2, z2 *big.Int) (*big.
 	if xEqual && yEqual {
 		return curve.doubleJacobian(x1, y1, z1)
 	}
-	r.Lsh(r, 1)
+	r.Lsh(r, 1) //r²
 	v := new(big.Int).Mul(u1, i)
 
 	x3.Set(r)
@@ -180,9 +180,14 @@ func (curve *secp256k1Curve) addJacobian(x1, y1, z1, x2, y2, z2 *big.Int) (*big.
 	return x3, y3, z3
 }
 
-// doubleJacobian --
-// takes a point in Jacobian coordinates, (x, y, z), and
-// returns its double, also in Jacobian form.
+// Double -- returns 2*(x,y).
+func (curve *secp256k1Curve) Double(x1, y1 *big.Int) (*big.Int, *big.Int) {
+	z1 := zForAffine(x1, y1)
+	return curve.affineFromJacobian(curve.doubleJacobian(x1, y1, z1))
+}
+
+// doubleJacobian -- takes a point in Jacobian coordinates, (x, y, z),
+// and returns its double, also in Jacobian form.
 func (curve *secp256k1Curve) doubleJacobian(x, y, z *big.Int) (*big.Int, *big.Int, *big.Int) {
 	// See http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
 	var a, b, c, d, e, f, x3, y3, z3 big.Int
@@ -234,7 +239,7 @@ func (curve *secp256k1Curve) doubleJacobian(x, y, z *big.Int) (*big.Int, *big.In
 	return &x3, &y3, &z3
 }
 
-// ScalarMult -- multi operation
+// ScalarMult -- returns k*(Bx,By) where k is a number in big-endian form.
 func (curve *secp256k1Curve) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *big.Int) {
 	Bz := new(big.Int).SetInt64(1)
 	x, y, z := new(big.Int), new(big.Int), new(big.Int)
@@ -251,7 +256,7 @@ func (curve *secp256k1Curve) ScalarMult(Bx, By *big.Int, k []byte) (*big.Int, *b
 	return curve.affineFromJacobian(x, y, z)
 }
 
-// ScalarBaseMult -- multi G base point
+// ScalarBaseMult -- returns k*G.
 func (curve *secp256k1Curve) ScalarBaseMult(k []byte) (*big.Int, *big.Int) {
 	return curve.ScalarMult(curve.Gx, curve.Gy, k)
 }
