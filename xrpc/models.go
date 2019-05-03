@@ -40,6 +40,7 @@ type BlockResult struct {
 	Nonce         uint32              `json:"nonce"`
 	Bits          string              `json:"bits"`
 	Difficulty    float64             `json:"difficulty"`
+	ChainWork     string              `json:"chainwork"`
 	PreviousHash  string              `json:"previousblockhash"`
 	NextHash      string              `json:"nextblockhash,omitempty"`
 }
