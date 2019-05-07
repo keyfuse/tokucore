@@ -8,9 +8,15 @@ package xcrypto
 
 import (
 	"bytes"
-	"crypto/hmac"
 	"hash"
 	"math/big"
+
+	"crypto/hmac"
+	"crypto/sha256"
+)
+
+var (
+	one = big.NewInt(1)
 )
 
 // mac -- returns an HMAC of the given key and message
@@ -61,11 +67,12 @@ func bits2octets(in []byte, q *big.Int, qlen, rolen int) []byte {
 	return int2octets(z2, rolen)
 }
 
-var one = big.NewInt(1)
-
 // https://tools.ietf.org/html/rfc6979#section-3.2
-func generateSecret(q, x *big.Int, alg func() hash.Hash, hash []byte, test func(*big.Int) bool) {
+// nonceRFC6979 generates an ECDSA nonce (`k`) deterministically according to RFC 6979.
+// It takes a 32-byte hash as an input and returns 32-byte nonce to be used in ECDSA algorithm.
+func nonceRFC6979(q, x *big.Int, hash []byte) *big.Int {
 	qlen := q.BitLen()
+	alg := sha256.New
 	holen := alg().Size()
 	rolen := (qlen + 7) >> 3
 	bx := append(int2octets(x, rolen), bits2octets(hash, q, qlen, rolen)...)
@@ -101,8 +108,8 @@ func generateSecret(q, x *big.Int, alg func() hash.Hash, hash []byte, test func(
 
 		// Step H3
 		secret := bits2int(t, qlen)
-		if secret.Cmp(one) >= 0 && secret.Cmp(q) < 0 && test(secret) {
-			return
+		if secret.Cmp(one) >= 0 && secret.Cmp(q) < 0 {
+			return secret
 		}
 		k = mac(alg, k, append(v, 0x00), k)
 		v = mac(alg, k, v, v)

@@ -65,8 +65,8 @@ coverage:
 	go tool cover -html=coverage.out
 
 check:
-	go get gopkg.in/alecthomas/gometalinter.v2
-	go get honnef.co/go/tools/cmd/megacheck
+	go get -v gopkg.in/alecthomas/gometalinter.v2
+	go get -v honnef.co/go/tools/cmd/megacheck
 	$(GOPATH)/bin/gometalinter.v2 -j 4 --disable-all \
 	--enable=gofmt \
 	--enable=golint \

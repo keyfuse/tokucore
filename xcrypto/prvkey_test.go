@@ -38,18 +38,6 @@ func TestPrivKeys(t *testing.T) {
 			continue
 		}
 
-		hash := []byte{0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9}
-		sig, err := priv.Sign(hash)
-		if err != nil {
-			t.Errorf("%s could not sign: %v", test.name, err)
-			continue
-		}
-
-		if !sig.Verify(hash, pub) {
-			t.Errorf("%s could not verify: %v", test.name, err)
-			continue
-		}
-
 		serializedKey := priv.Serialize()
 		if !bytes.Equal(serializedKey, test.key) {
 			t.Errorf("%s unexpected serialized bytes - got: %x, "+

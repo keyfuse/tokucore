@@ -13,7 +13,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/sha256"
-	"crypto/sha512"
 )
 
 type ecdsaFixture struct {
@@ -88,14 +87,7 @@ var fixtures = []ecdsaFixture{
 		r:       "61AA3DA010E8E8406C656BC477A7A7189895E7E840CDFE8FF42307BA",
 		s:       "437EBFAF254A2DC88F786B6B061E7022049DF927FA4B6B5EC9AB293C",
 	},
-	{
-		name:    "P224/SHA-512 #1",
-		key:     p224,
-		alg:     sha512.New,
-		message: "sample",
-		r:       "074BD1D979D5F32BF958DDC61E4FB4872ADCAFEB2256497CDAC30397",
-		s:       "5B3135E693C2A5E00CEFD84CCE793A13FC79C7B2F231F516FECD79B9",
-	},
+
 	{
 		name:    "P224/SHA-256 #2",
 		key:     p224,
@@ -105,28 +97,12 @@ var fixtures = []ecdsaFixture{
 		s:       "178D49B1AE90E3D8B629BE3DB5683915F4E8C99FDF6E666CF37ADCFD",
 	},
 	{
-		name:    "P224/SHA-512 #2",
-		key:     p224,
-		alg:     sha512.New,
-		message: "test",
-		r:       "049F050477C5ADD858CAC56208394B5A55BAEBBE887FDF765047C17C",
-		s:       "077EB13E7005929CEFA3CD0403C7CDCC077ADF4E44F3C41B2F60ECFF",
-	},
-	{
 		name:    "P256/SHA-256 #1",
 		key:     p256,
 		alg:     sha256.New,
 		message: "sample",
 		r:       "EFD48B2AACB6A8FD1140DD9CD45E81D69D2C877B56AAF991C34D0EA84EAF3716",
 		s:       "834E36AD29A83BF2BC9385E491D6099C8FDF9D1ED67AA7EA5F51F93782857A9",
-	},
-	{
-		name:    "P256/SHA-384 #1",
-		key:     p256,
-		alg:     sha512.New384,
-		message: "sample",
-		r:       "0EAFEA039B20E9B42309FB1D89E213057CBF973DC0CFC8F129EDDDC800EF7719",
-		s:       "4861F0491E6998B9455193E34E7B0D284DDD7149A74B95B9261F13ABDE940954",
 	},
 	{
 		name:    "P256/SHA-256 #2",
@@ -153,16 +129,6 @@ var fixtures = []ecdsaFixture{
 		message: "test",
 		r:       "6D6DEFAC9AB64DABAFE36C6BF510352A4CC27001263638E5B16D9BB51D451559F918EEDAF2293BE5B475CC8F0188636B",
 		s:       "2D46F3BECBCC523D5F1A1256BF0C9B024D879BA9E838144C8BA6BAEB4B53B47D51AB373F9845C0514EEFB14024787265",
-	},
-	// ECDSA, 521 Bits (Prime Field)
-	// https://tools.ietf.org/html/rfc6979#appendix-A.2.7
-	{
-		name:    "P521/SHA-224 #1",
-		key:     p521,
-		alg:     sha256.New224,
-		message: "sample",
-		r:       "1776331CFCDF927D666E032E00CF776187BC9FDD8E69D0DABB4109FFE1B5E2A30715F4CC923A4A5E94D2503E9ACFED92857B7F31D7152E0F8C00C15FF3D87E2ED2E",
-		s:       "050CB5265417FE2320BBB5A122B8E1A32BD699089851128E360E620A30C7E17BA41A666AF126CE100E5799B153B60528D5300D08489CA9178FB610A2006C254B41F",
 	},
 	{
 		name:    "P521/SHA-256 #1",
@@ -205,7 +171,7 @@ func testEcdsaFixture(f *ecdsaFixture, t *testing.T) {
 		digest = digest[0:g]
 	}
 
-	r, s, err := EcdsaSign(f.key.key, digest, f.alg)
+	r, s, err := EcdsaSign(f.key.key, digest)
 	if err != nil {
 		t.Error(err)
 		return
@@ -237,7 +203,7 @@ func BenchmarkSignP256(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, _, err := EcdsaSign(f.key.key, digest, f.alg); err != nil {
+		if _, _, err := EcdsaSign(f.key.key, digest); err != nil {
 			panic(err)
 		}
 	}
@@ -254,7 +220,7 @@ func BenchmarkVerifyP256(b *testing.B) {
 	if len(digest) > g {
 		digest = digest[0:g]
 	}
-	r, s, _ := EcdsaSign(f.key.key, digest, f.alg)
+	r, s, _ := EcdsaSign(f.key.key, digest)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

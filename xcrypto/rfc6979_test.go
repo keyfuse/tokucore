@@ -6,7 +6,6 @@
 package xcrypto
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"math/big"
 	"testing"
@@ -21,12 +20,7 @@ func TestGenerateSecret(t *testing.T) {
 	hash, _ := hex.DecodeString("AF2BDBE1AA9B6EC1E2ADE1D694F41FC71A831D0268E9891562113D8A62ADD1BF")
 
 	expected, _ := new(big.Int).SetString("23AF4074C90A02B3FE61D286D5C87F425E6BDD81B", 16)
-	var actual *big.Int
-	generateSecret(q, x, sha256.New, hash, func(k *big.Int) bool {
-		actual = k
-		return true
-	})
-
+	actual := nonceRFC6979(q, x, hash)
 	if actual.Cmp(expected) != 0 {
 		t.Errorf("Expected %x, got %x", expected, actual)
 	}

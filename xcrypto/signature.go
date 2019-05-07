@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"crypto/ecdsa"
 	"encoding/asn1"
 )
 
@@ -34,25 +33,14 @@ func (sig *Signature) Deserialize(der []byte) error {
 	return err
 }
 
-// Verify --
-// calls ecdsa.Verify to verify the signature of hash using the public key.
-// It returns true if the signature is valid, false otherwise.
-func (sig *Signature) Verify(hash []byte, pubKey *PublicKey) bool {
-	return ecdsa.Verify(pubKey.ToECDSA(), hash, sig.R, sig.S)
-}
-
 // Sign -- sign a hash and return the signature with DER format.
 func Sign(hash []byte, prv *PrivateKey) ([]byte, error) {
-	sig, err := prv.Sign(hash)
+	r, s, err := EcdsaSign(prv.ToECDSA(), hash)
 	if err != nil {
 		return nil, err
 	}
-
-	der, err := sig.Serialize()
-	if err != nil {
-		return nil, err
-	}
-	return der, nil
+	sig := &Signature{R: r, S: s}
+	return sig.Serialize()
 }
 
 // Verify -- verify the signature with ECDSA public key.
@@ -61,7 +49,7 @@ func Verify(hash []byte, sign []byte, pub *PublicKey) error {
 	if err := sig.Deserialize(sign); err != nil {
 		return err
 	}
-	if !sig.Verify(hash, pub) {
+	if !EcdsaVerify(pub.ToECDSA(), hash, sig.R, sig.S) {
 		return fmt.Errorf("signature.verify.failed")
 	}
 	return nil

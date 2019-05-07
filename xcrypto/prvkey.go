@@ -10,7 +10,6 @@ import (
 	"math/big"
 
 	"crypto/ecdsa"
-	"crypto/sha256"
 )
 
 const (
@@ -67,20 +66,4 @@ func (p *PrivateKey) Serialize() []byte {
 	}
 	key.Write(dBytes)
 	return key.Bytes()
-}
-
-// Sign --
-// generates an ECDSA signature for the provided hash (which should be the result
-// of hashing a larger message) using the private key. Produced signature
-// is deterministic (same message and same key yield the same signature) and canonical
-// in accordance with RFC6979 and BIP0062.
-func (p *PrivateKey) Sign(hash []byte) (*Signature, error) {
-	sig := &Signature{}
-	r, s, err := EcdsaSign(p.ToECDSA(), hash, sha256.New)
-	if err != nil {
-		return nil, err
-	}
-	sig.R = r
-	sig.S = s
-	return sig, nil
 }
