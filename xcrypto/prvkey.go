@@ -22,6 +22,7 @@ type PrivateKey ecdsa.PrivateKey
 
 // PrvKeyFromBytes -- returns a private and public key for secp256k1 curve.
 func PrvKeyFromBytes(key []byte) *PrivateKey {
+	curve := SECP256K1()
 	x, y := curve.ScalarBaseMult(key)
 	priv := &ecdsa.PrivateKey{
 		PublicKey: ecdsa.PublicKey{
@@ -45,7 +46,7 @@ func (p *PrivateKey) Add(n2 []byte) *PrivateKey {
 	kint1 := p.D
 	kint2 := new(big.Int).SetBytes(n2)
 	kint1.Add(kint1, kint2)
-	kint1.Mod(kint1, curveParams.N)
+	kint1.Mod(kint1, p.Curve.Params().N)
 	return PrvKeyFromBytes(kint1.Bytes())
 }
 

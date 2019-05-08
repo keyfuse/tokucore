@@ -20,7 +20,7 @@ func EcdsaSign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) 
 	N := c.Params().N
 
 	// RFC6979
-	k := nonceRFC6979(N, priv.D, hash)
+	k := nonceRFC6979(N, D, hash)
 
 	// point (x1,y1) = k*G
 	// r = x1

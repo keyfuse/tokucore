@@ -73,14 +73,12 @@ func TestMerkle(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Logf("test:#%v", test.name)
 		merkle := NewMerkle(test.hashs)
 		root := merkle.Root()
 		assert.Equal(t, test.root, root)
 
 		hash := test.hashs[len(test.hashs)-1]
 		prove := merkle.Proofs(hash)
-		t.Logf("prove:%+v", prove)
 
 		verify := merkle.Verify(hash, root, prove)
 		assert.True(t, verify)
@@ -112,8 +110,6 @@ func TestMerkleVerifyError(t *testing.T) {
 
 		hash := test.hashs[len(test.hashs)-1]
 		prove := merkle.Proofs(hash)
-		t.Logf("prove:%+v", prove)
-
 		verify := merkle.Verify(hash, root, prove)
 		assert.True(t, verify)
 

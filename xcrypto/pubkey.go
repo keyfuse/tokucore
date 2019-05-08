@@ -24,17 +24,13 @@ const (
 	pubkeyHybrid       byte = 0x6 // y_bit + x coord + y coord
 )
 
-var (
-	curve       = SECP256K1()
-	curveParams = curve.Params()
-)
-
 // PublicKey -- an ecdsa.PublicKey with additional functions to
 // serialize in uncompressed, compressed, and hybrid formats.
 type PublicKey ecdsa.PublicKey
 
 // PubKeyFromBytes -- parse bytes to public key.
 func PubKeyFromBytes(key []byte) (*PublicKey, error) {
+	curve := SECP256K1()
 	pubkey := PublicKey{
 		Curve: curve, // secp256k1 curve
 	}
@@ -63,10 +59,11 @@ func PubKeyFromBytes(key []byte) (*PublicKey, error) {
 			return nil, fmt.Errorf("pubkey.ybit[%v].doesnt.match.oddness[%v]", ybit, isOdd(pubkey.Y))
 		}
 	case pubKeyBytesLenCompressed:
-		if format != pubkeyCompressed {
+		x, y := SecUnmarshal(curve, key)
+		if x == nil || y == nil {
 			return nil, fmt.Errorf("pubkey.format.invalid:%v", format)
 		}
-		pubkey.X, pubkey.Y = expandPublicKey(key)
+		pubkey.X, pubkey.Y = x, y
 	default:
 		return nil, fmt.Errorf("pubkey.size[%v].invalid", pkLen)
 	}
@@ -104,6 +101,7 @@ func (p *PublicKey) YBytes() []byte {
 func (p *PublicKey) Add(n2 []byte) *PublicKey {
 	x1 := p.X
 	y1 := p.Y
+	curve := p.Curve
 
 	// Private key.
 	// pubkey1 = prvkey1*G
@@ -133,45 +131,27 @@ func (p *PublicKey) Serialize() []byte {
 // SerializeUncompressed -- encoding public key in a 65-byte uncompressed format.
 func (p *PublicKey) SerializeUncompressed() []byte {
 	var key bytes.Buffer
+	byteLen := (p.Curve.Params().BitSize + 7) >> 3
 
 	// Format.
 	format := pubkeyUncompressed
 	key.WriteByte(format)
 
-	// X with padding to 32-bytes.
 	xBytes := p.X.Bytes()
-	for i := 0; i < (32 - len(xBytes)); i++ {
-		key.WriteByte(0x0)
-	}
-	key.Write(xBytes)
+	xbuf := make([]byte, byteLen)
+	copy(xbuf[byteLen-len(xBytes):], xBytes)
+	key.Write(xbuf)
 
-	// Y with padding to 32-bytes.
 	yBytes := p.Y.Bytes()
-	for i := 0; i < (32 - len(yBytes)); i++ {
-		key.WriteByte(0x0)
-	}
-	key.Write(yBytes)
+	ybuf := make([]byte, byteLen)
+	copy(ybuf[byteLen-len(yBytes):], yBytes)
+	key.Write(ybuf)
 	return key.Bytes()
 }
 
 // SerializeCompressed -- encoding a public key in a 33-byte compressed foramt.
 func (p *PublicKey) SerializeCompressed() []byte {
-	var key bytes.Buffer
-
-	// Format.
-	format := pubkeyCompressed
-	if isOdd(p.Y) {
-		format |= 0x1
-	}
-	key.WriteByte(format)
-
-	// X with padding to 32-bytes.
-	xBytes := p.X.Bytes()
-	for i := 0; i < (32 - len(xBytes)); i++ {
-		key.WriteByte(0x0)
-	}
-	key.Write(xBytes)
-	return key.Bytes()
+	return SecMarshal(p.Curve, p.X, p.Y)
 }
 
 // Hash160 -- returns the Hash160 of the compressed public key.
@@ -182,6 +162,7 @@ func (p *PublicKey) Hash160() []byte {
 // SerializeHybrid -- encoding a public key in a 65-byte hybrid format.
 func (p *PublicKey) SerializeHybrid() []byte {
 	var key bytes.Buffer
+	byteLen := (p.Curve.Params().BitSize + 7) >> 3
 
 	// Format.
 	format := pubkeyHybrid
@@ -190,47 +171,14 @@ func (p *PublicKey) SerializeHybrid() []byte {
 	}
 	key.WriteByte(format)
 
-	// X with padding to 32-bytes.
 	xBytes := p.X.Bytes()
-	for i := 0; i < (32 - len(xBytes)); i++ {
-		key.WriteByte(0x0)
-	}
-	key.Write(xBytes)
+	xbuf := make([]byte, byteLen)
+	copy(xbuf[byteLen-len(xBytes):], xBytes)
+	key.Write(xbuf)
 
-	// Y with padding to 32-bytes.
 	yBytes := p.Y.Bytes()
-	for i := 0; i < (32 - len(yBytes)); i++ {
-		key.WriteByte(0x0)
-	}
-	key.Write(yBytes)
+	ybuf := make([]byte, byteLen)
+	copy(ybuf[byteLen-len(yBytes):], yBytes)
+	key.Write(ybuf)
 	return key.Bytes()
-}
-
-func isOdd(a *big.Int) bool {
-	return a.Bit(0) == 1
-}
-
-// As described at https://crypto.stackexchange.com/a/8916.
-func expandPublicKey(key []byte) (*big.Int, *big.Int) {
-	Y := big.NewInt(0)
-	X := big.NewInt(0)
-	X.SetBytes(key[1:])
-
-	// y^2 = x^3 + ax^2 + b
-	// a = 0
-	// => y^2 = x^3 + b
-	ySquared := big.NewInt(0)
-	ySquared.Exp(X, big.NewInt(3), nil)
-	ySquared.Add(ySquared, curveParams.B)
-
-	Y.ModSqrt(ySquared, curveParams.P)
-
-	Ymod2 := big.NewInt(0)
-	Ymod2.Mod(Y, big.NewInt(2))
-
-	signY := uint64(key[0]) - 2
-	if signY != Ymod2.Uint64() {
-		Y.Sub(curveParams.P, Y)
-	}
-	return X, Y
 }
