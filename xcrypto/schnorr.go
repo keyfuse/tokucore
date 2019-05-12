@@ -60,7 +60,8 @@ func SchnorrSign(priv *PrivateKey, m [32]byte) ([64]byte, error) {
 	return sig, nil
 }
 
-// https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki#signing
+// SchnorrVerify -- verify the signature against the public key.
+// https://github.com/sipa/bips/blob/bip-schnorr/bip-schnorr.mediawiki#verification
 // Input:
 //   The public key pk: a 33-byte array
 //   The message m: a 32-byte array

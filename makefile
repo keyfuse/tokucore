@@ -66,7 +66,6 @@ coverage:
 
 check:
 	go get -v gopkg.in/alecthomas/gometalinter.v2
-	go get -v honnef.co/go/tools/cmd/megacheck
 	$(GOPATH)/bin/gometalinter.v2 -j 4 --disable-all \
 	--enable=gofmt \
 	--enable=golint \
@@ -74,6 +73,5 @@ check:
 	--enable=gosimple \
 	--enable=unconvert \
 	--deadline=10m $(pkgs) 2>&1 | grep -v 'ALL_CAPS\|OP_' 2>&1 | tee /dev/stderr
-	$(GOPATH)/bin/megacheck $(pkgs) 2>&1 | tee /dev/stderr
 
 .PHONY: clean test coverage check
