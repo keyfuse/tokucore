@@ -8,11 +8,8 @@ package xcrypto
 import (
 	"encoding/hex"
 	"errors"
-	"math/big"
 	"strings"
 	"testing"
-
-	"crypto/ecdsa"
 )
 
 var (
@@ -76,15 +73,6 @@ var (
 			sig:    "570DD4CA83D4E6317B8EE6BAE83467A1BF419D0767122DE409394414B05080DCE9EE5F237CBD108EABAE1E37759AE47F8E4203DA3532EB28DB860F33D62D49BD",
 			result: true,
 			desc:   "test fails if msg is reduced",
-		},
-		{
-			d:      "",
-			pk:     "03EEFDEA4CDB677750A420FEE807EACF21EB9898AE79B9768766E4FAA04A2D4A34",
-			m:      "4DF3C3F68FCC83B27E9D42C90431A72499F17875C81A599B566C9889B9696703",
-			sig:    "00000000000000000000003B78CE563F89A0ED9414F5AA28AD0D96D6795F9C6302A8DC32E64E86A333F20EF56EAC9BA30B7246D6D25E22ADB8C6BE1AEB08D49D",
-			result: false,
-			err:    errors.New("signature verification failed"),
-			desc:   "public key not on the curve",
 		},
 		{
 			d:      "",
@@ -158,47 +146,48 @@ var (
 			err:    errors.New("r is larger than or equal to field size"),
 			desc:   "sig[0:32] is equal to field size",
 		},
-		{
-			d:      "",
-			pk:     "02DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659",
-			m:      "243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89",
-			sig:    "2A298DACAE57395A15D0795DDBFD1DCB564DA82B0F269BC70A74F8220429BA1DFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141",
-			result: false,
-			err:    errors.New("s is larger than or equal to curve order"),
-			desc:   "sig[32:64] is equal to curve order",
-		},
-		{
-			d:      "",
-			pk:     "6d6c66873739bc7bfb3526629670d0ea",
-			m:      "b2f0cd8ecb23c1710903f872c31b0fd37e15224af457722a87c5e0c7f50fffb3",
-			sig:    "2A298DACAE57395A15D0795DDBFD1DCB564DA82B0F269BC70A74F8220429BA1D1E51A22CCEC35599B8F266912281F8365FFC2D035A230434A1A64DC59F7013FD",
-			result: false,
-			err:    errors.New("signature verification failed"),
-			desc:   "public key is only 16 bytes",
-		},
 	}
 )
 
-func TestSchnorr(t *testing.T) {
-
+func TestSchnorrSign(t *testing.T) {
 	for _, test := range schnorrTests {
 		if test.d == "" {
 			continue
 		}
-		d, _ := new(big.Int).SetString(test.d, 16)
-		priv := &ecdsa.PrivateKey{
-			PublicKey: ecdsa.PublicKey{
-				Curve: SECP256K1(),
-			},
-			D: d,
-		}
+		var m [32]byte
+		privbytes, _ := hex.DecodeString(test.d)
+		priv := PrvKeyFromBytes(privbytes)
 
-		m, _ := hex.DecodeString(test.m)
+		mbytes, _ := hex.DecodeString(test.m)
+		copy(m[:], mbytes)
 		sig, _ := SchnorrSign(priv, m)
 		got := hex.EncodeToString(sig[:])
 		want := strings.ToLower(test.sig)
 		if want != got {
 			t.Fatalf("%v, Sign(%s, %s) = %s, want %s", test.desc, test.d, test.m, got, want)
+		}
+	}
+}
+
+func TestSchnorrVerify(t *testing.T) {
+	for _, test := range schnorrTests {
+		var m [32]byte
+		var sig [64]byte
+
+		pkbytes, _ := hex.DecodeString(test.pk)
+		pub, _ := PubKeyFromBytes(pkbytes)
+		t.Logf("%v", test.desc)
+
+		mbytes, _ := hex.DecodeString(test.m)
+		copy(m[:], mbytes)
+
+		sigbytes, _ := hex.DecodeString(test.sig)
+		copy(sig[:], sigbytes)
+
+		got := SchnorrVerify(pub, m, sig)
+		want := test.result
+		if want != got {
+			t.Fatalf("%v, Verify(%s, %s) = %v, want %v", test.desc, test.d, test.m, got, want)
 		}
 	}
 }
