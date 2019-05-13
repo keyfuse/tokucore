@@ -16,7 +16,7 @@ func SecMarshal(curve elliptic.Curve, x *big.Int, y *big.Int) []byte {
 	byteLen := (curve.Params().BitSize + 7) >> 3
 	ret := make([]byte, 1+byteLen)
 
-	// 0x02, 0x03 for odd.
+	// 0x02 for even, 0x03 for odd.
 	format := byte(0x02)
 	if isOdd(y) {
 		format |= 0x01
@@ -43,15 +43,12 @@ func SecUnmarshal(curve elliptic.Curve, data []byte) (*big.Int, *big.Int) {
 	// y^2 = x^3 + b
 	X.SetBytes(data[1:])
 	ySquared := big.NewInt(0)
-	ySquared.Exp(X, big.NewInt(3), nil)
+	ySquared.Exp(X, three, nil)
 	ySquared.Add(ySquared, curveParams.B)
 	Y.ModSqrt(ySquared, curveParams.P)
 
-	Ymod2 := big.NewInt(0)
-	Ymod2.Mod(Y, big.NewInt(2))
-
-	signY := uint64(data[0]) - 2
-	if signY != Ymod2.Uint64() {
+	// Y is odd or even.
+	if Y.Bit(0) != uint(data[0]&1) {
 		Y.Sub(curveParams.P, Y)
 	}
 	return X, Y

@@ -28,6 +28,7 @@ import (
 func SchnorrSign(priv *PrivateKey, m [32]byte) ([64]byte, error) {
 	sig := [64]byte{}
 	curve := priv.Curve
+
 	D := priv.D
 	P := curve.Params().P
 	N := curve.Params().N
@@ -41,22 +42,31 @@ func SchnorrSign(priv *PrivateKey, m [32]byte) ([64]byte, error) {
 
 	// R = k'G
 	Rx, Ry := curve.ScalarBaseMult(k0.Bytes())
+	rX := intToByte(Rx)
 	k := getK(Ry, k0, P, N)
 
-	// dG
+	// P = dG
 	Px, Py := curve.ScalarBaseMult(d)
-
-	// bytes(Rx)
-	rX := intToByte(Rx)
 
 	// e = int(hash(bytes(x(R)) || bytes(dG) || m)) mod n
 	e := getE(curve, m, Px, Py, rX, N)
-	e.Mul(e, D)
-	k.Add(k, e)
-	k.Mod(k, N)
+
+	// ed
+	ed := new(big.Int)
+	ed.Mul(e, D)
+
+	// s = k + ed
+	s := new(big.Int)
+	s.Add(k, ed)
+	s.Mod(s, N)
 
 	copy(sig[:32], rX)
-	copy(sig[32:], intToByte(k))
+	copy(sig[32:], intToByte(s))
+
+	// Clean.
+	zeroSlice(d)
+	k.SetInt64(0)
+
 	return sig, nil
 }
 
@@ -134,4 +144,11 @@ func intToByte(i *big.Int) []byte {
 	b1, b2 := [32]byte{}, i.Bytes()
 	copy(b1[32-len(b2):], b2)
 	return b1[:]
+}
+
+// zeroSlice -- zeroes the memory of a scalar byte slice.
+func zeroSlice(s []byte) {
+	for i := 0; i < len(s); i++ {
+		s[i] = 0x00
+	}
 }

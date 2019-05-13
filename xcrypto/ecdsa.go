@@ -47,6 +47,10 @@ func EcdsaSign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) 
 	if s.Sign() == 0 {
 		return nil, nil, errors.New("calculated S is zero")
 	}
+
+	// Clean.
+	k.SetInt64(0)
+
 	return r, s, nil
 }
 
