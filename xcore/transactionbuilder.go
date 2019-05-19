@@ -7,7 +7,6 @@ package xcore
 
 import (
 	"encoding/hex"
-	"fmt"
 
 	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcrypto"
@@ -20,22 +19,26 @@ const (
 	Unit = 1e8
 )
 
-// Change -- the change to address.
-type Change struct {
+type change struct {
 	addr Address
 }
 
-// Send -- the send to address.
-type Send struct {
-	addr  Address
-	value uint64
+type output struct {
+	addr   Address
+	value  uint64
+	script string
+}
+
+type input struct {
+	compressed bool
+	keys       []*xcrypto.PrivateKey
 }
 
 // Group -- the group includes from/sendto/changeto.
 type Group struct {
 	coins        []*Coin
 	keys         []*xcrypto.PrivateKey
-	to           *Send
+	output       *output
 	redeemScript []byte
 	stepin       bool
 	compressed   bool
@@ -45,11 +48,11 @@ type Group struct {
 type TransactionBuilder struct {
 	idx           int
 	sign          bool
+	maxFees       int64
 	sendFees      int64
 	relayFeePerKb int64
-	maxFees       int64
 	lockTime      uint32
-	change        *Change
+	change        *change
 	groups        []Group
 	pushDatas     [][]byte
 }
@@ -62,6 +65,28 @@ func NewTransactionBuilder() *TransactionBuilder {
 		maxFees:  Unit * 1,
 		groups:   make([]Group, 1),
 	}
+}
+
+// AddInput -- add the raw input.
+func (b *TransactionBuilder) AddInput(txid string, n uint32, value uint64, finalScript string) *TransactionBuilder {
+	coin := &Coin{
+		txID:   txid,
+		n:      n,
+		value:  value,
+		script: finalScript,
+	}
+	b.AddCoins(coin)
+	return b
+}
+
+// AddOutput -- add the raw output.
+func (b *TransactionBuilder) AddOutput(value uint64, finalScript string) *TransactionBuilder {
+	b.groups[b.idx].stepin = true
+	b.groups[b.idx].output = &output{
+		value:  value,
+		script: finalScript,
+	}
+	return b
 }
 
 // AddCoins -- set the from coin.
@@ -82,7 +107,7 @@ func (b *TransactionBuilder) AddKeys(keys ...*xcrypto.PrivateKey) *TransactionBu
 // To -- set the to address and value.
 func (b *TransactionBuilder) To(addr Address, value uint64) *TransactionBuilder {
 	b.groups[b.idx].stepin = true
-	b.groups[b.idx].to = &Send{
+	b.groups[b.idx].output = &output{
 		value: value,
 		addr:  addr,
 	}
@@ -104,7 +129,7 @@ func (b *TransactionBuilder) SetPubKeyUncompressed() *TransactionBuilder {
 
 // SetChange -- set the change address.
 func (b *TransactionBuilder) SetChange(addr Address) *TransactionBuilder {
-	b.change = &Change{addr: addr}
+	b.change = &change{addr: addr}
 	return b
 }
 
@@ -153,13 +178,6 @@ func (b *TransactionBuilder) Then() *TransactionBuilder {
 	return b
 }
 
-type vin struct {
-	coin         *Coin
-	keys         []*xcrypto.PrivateKey
-	compressed   bool
-	redeemScript []byte
-}
-
 // BuildTransaction -- build the transaction.
 func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 	var totalIn int64
@@ -167,96 +185,79 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 	var estimateSize int64
 	var estimateFees int64
 
-	// Since golang's map iterate not in order, so we using two slices.
-	var vinslice []*vin
-	var sendslice []*Send
+	var inputs []*input
 	var txins []*TxIn
 	var txouts []*TxOut
 	var changeTxOut *TxOut
 
-	// For merge.
-	vinmap := make(map[string]*vin)
-	sendmap := make(map[string]*Send)
-
-	// Merge the from coins and sendto.
 	for i, group := range b.groups {
 		if !group.stepin {
 			continue
 		}
 
 		froms := group.coins
-		to := group.to
-		// Sanity check.
+		output := group.output
+
+		// Input check.
 		if froms == nil {
 			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FROM_EMPTY, i)
 		}
-		if to == nil {
+
+		// Output check.
+		if output == nil {
 			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SENDTO_EMPTY, i)
 		}
 
-		// Merge the from.
-		for _, from := range froms {
-			// Hex to TxID.
-			txid, err := xbase.NewIDFromString(from.txID)
-			if err != nil {
-				return nil, err
-			}
-			vkey := fmt.Sprintf("%x:%d", txid, from.n)
-			if _, ok := vinmap[vkey]; !ok {
-				vin := &vin{
-					coin:         from,
-					keys:         group.keys,
-					compressed:   group.compressed,
-					redeemScript: group.redeemScript,
+		// Input.
+		{
+			for _, from := range froms {
+				// Hex to TxID.
+				txid, err := xbase.NewIDFromString(from.txID)
+				if err != nil {
+					return nil, err
 				}
-				vinmap[vkey] = vin
-				vinslice = append(vinslice, vin)
+				// Hex to script.
+				script, err := hex.DecodeString(from.script)
+				if err != nil {
+					return nil, err
+				}
+				txin := NewTxIn(txid, from.n, from.value, script, group.redeemScript)
+				txins = append(txins, txin)
+				totalIn += int64(from.value)
+
+				// inputs.
+				input := &input{
+					keys:       group.keys,
+					compressed: group.compressed,
+				}
+				inputs = append(inputs, input)
 			}
 		}
 
-		// Merge the sendto.
-		skey := fmt.Sprintf("%x", to.addr.Hash160())
-		if send, ok := sendmap[skey]; !ok {
-			snt := &Send{
-				addr:  to.addr,
-				value: to.value,
+		// Output.
+		{
+			if output != nil {
+				var err error
+				var script []byte
+
+				if output.addr != nil {
+					script, err = PayToAddrScript(output.addr)
+					if err != nil {
+						return nil, err
+					}
+				}
+
+				if output.script != "" {
+					script, err = hex.DecodeString(output.script)
+					if err != nil {
+						return nil, err
+					}
+				}
+				txout := NewTxOut(output.value, script)
+				txouts = append(txouts, txout)
+				totalOut += int64(output.value)
 			}
-			sendmap[skey] = snt
-			sendslice = append(sendslice, snt)
-		} else {
-			send.value += to.value
 		}
-	}
-
-	// Inputs.
-	for _, vin := range vinslice {
-		coin := vin.coin
-
-		// Hex to TxID.
-		txid, err := xbase.NewIDFromString(coin.txID)
-		if err != nil {
-			return nil, err
-		}
-		// Hex to script.
-		script, err := hex.DecodeString(coin.script)
-		if err != nil {
-			return nil, err
-		}
-
-		txin := NewTxIn(txid, coin.n, coin.value, script, vin.redeemScript)
-		txins = append(txins, txin)
-		totalIn += int64(coin.value)
-	}
-
-	// Sendto.
-	for _, send := range sendslice {
-		script, err := PayToAddrScript(send.addr)
-		if err != nil {
-			return nil, err
-		}
-		output := NewTxOut(send.value, script)
-		txouts = append(txouts, output)
-		totalOut += int64(send.value)
 	}
 
 	// Estimate fee.
@@ -332,11 +333,11 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 
 	// Sign.
 	if b.sign {
-		for i, vin := range vinslice {
-			if vin.keys == nil {
+		for i, input := range inputs {
+			if input.keys == nil {
 				return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, i)
 			}
-			if err := transaction.SignIndex(i, vin.compressed, vin.keys...); err != nil {
+			if err := transaction.SignIndex(i, input.compressed, input.keys...); err != nil {
 				return nil, err
 			}
 		}

@@ -16,6 +16,44 @@ import (
 	"github.com/tokublock/tokucore/xerror"
 )
 
+func TestTransactionBuilderAddInputOutput(t *testing.T) {
+	msg := []byte("666...satoshi")
+	seed := []byte("this.is.bohu.seed.")
+	bohuHDKey := bip32.NewHDKey(seed)
+	bohuPrv := bohuHDKey.PrivateKey()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
+
+	txb := NewTransactionBuilder()
+	txb.AddInput("bde974a17f9ab1cfbbfb00bb4561e27156ebd65a4163ea0f014e9114d5b65556",
+		1,
+		6762017,
+		"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
+	)
+	txb.AddOutput(3000, "76a9148b7f2212ecc4384abcf1df3fc5783e9c2a24d5a588ac")
+
+	// Fee.
+	txb.SendFees(1000)
+	txb.SetChange(bohu)
+
+	// Data.
+	txb.AddPushData(msg)
+
+	tx, err := txb.AddKeys(bohuPrv).Sign().BuildTransaction()
+	assert.Nil(t, err)
+
+	// Verify.
+	err = tx.Verify()
+	assert.Nil(t, err)
+
+	t.Logf("%v", tx.ToString())
+	t.Logf("txid:%v", tx.ID())
+
+	assert.Equal(t, tx.BaseSize(), tx.Size())
+	assert.Equal(t, tx.Vsize(), tx.Size())
+	assert.Equal(t, "092ddeb0fa8205a06494f2cf83afda0377479c86065e60dea5ae347468b27361", tx.ID())
+}
+
 func TestTransactionBuilderP2PKH(t *testing.T) {
 	msg := []byte("666...satoshi")
 
