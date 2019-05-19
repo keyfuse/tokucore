@@ -16,44 +16,6 @@ import (
 	"github.com/tokublock/tokucore/xerror"
 )
 
-func TestTransactionBuilderAddInputOutput(t *testing.T) {
-	msg := []byte("666...satoshi")
-	seed := []byte("this.is.bohu.seed.")
-	bohuHDKey := bip32.NewHDKey(seed)
-	bohuPrv := bohuHDKey.PrivateKey()
-	bohuPub := bohuHDKey.PublicKey()
-	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
-
-	txb := NewTransactionBuilder()
-	txb.AddInput("bde974a17f9ab1cfbbfb00bb4561e27156ebd65a4163ea0f014e9114d5b65556",
-		1,
-		6762017,
-		"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
-	)
-	txb.AddOutput(3000, "76a9148b7f2212ecc4384abcf1df3fc5783e9c2a24d5a588ac")
-
-	// Fee.
-	txb.SendFees(1000)
-	txb.SetChange(bohu)
-
-	// Data.
-	txb.AddPushData(msg)
-
-	tx, err := txb.AddKeys(bohuPrv).Sign().BuildTransaction()
-	assert.Nil(t, err)
-
-	// Verify.
-	err = tx.Verify()
-	assert.Nil(t, err)
-
-	t.Logf("%v", tx.ToString())
-	t.Logf("txid:%v", tx.ID())
-
-	assert.Equal(t, tx.BaseSize(), tx.Size())
-	assert.Equal(t, tx.Vsize(), tx.Size())
-	assert.Equal(t, "092ddeb0fa8205a06494f2cf83afda0377479c86065e60dea5ae347468b27361", tx.ID())
-}
-
 func TestTransactionBuilderP2PKH(t *testing.T) {
 	msg := []byte("666...satoshi")
 
@@ -79,7 +41,7 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 	).ToCoins()[0]
 
 	tx, err := NewTransactionBuilder().
-		AddCoins(bohuCoin).
+		AddCoin(bohuCoin).
 		AddKeys(bohuPrv).
 		To(satoshi, 3000).
 		Then().
@@ -154,7 +116,7 @@ func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 		).ToCoins()[0]
 
 		tx, err := NewTransactionBuilder().
-			AddCoins(bohuCoin).
+			AddCoin(bohuCoin).
 			AddKeys(bohuPrv).
 			To(multi, 4000).
 			Then().
@@ -185,7 +147,7 @@ func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 		).ToCoins()[0]
 
 		tx, err := NewTransactionBuilder().
-			AddCoins(multiCoin).
+			AddCoin(multiCoin).
 			AddKeys(aPrv, cPrv).
 			SetRedeemScript(redeem).
 			To(bohu, 1000).
@@ -234,7 +196,7 @@ func TestTransactionBuilderP2WPKH(t *testing.T) {
 		).ToCoins()[0]
 
 		tx, err := NewTransactionBuilder().
-			AddCoins(bohuCoin).
+			AddCoin(bohuCoin).
 			AddKeys(bohuPrv).
 			To(satoshi, 666666).
 			Then().
@@ -266,7 +228,7 @@ func TestTransactionBuilderP2WPKH(t *testing.T) {
 		).ToCoins()[0]
 
 		tx, err := NewTransactionBuilder().
-			AddCoins(satoshiCoin).
+			AddCoin(satoshiCoin).
 			AddKeys(satoshiPrv).
 			To(bohu, 66666).
 			Then().
@@ -333,7 +295,7 @@ func TestTransactionBuilderP2WSH(t *testing.T) {
 		).ToCoins()[0]
 
 		tx, err := NewTransactionBuilder().
-			AddCoins(bohuCoin).
+			AddCoin(bohuCoin).
 			AddKeys(bohuPrv).
 			To(multi, 4000).
 			Then().
@@ -365,7 +327,7 @@ func TestTransactionBuilderP2WSH(t *testing.T) {
 		).ToCoins()[0]
 
 		tx, err := NewTransactionBuilder().
-			AddCoins(multiCoin).
+			AddCoin(multiCoin).
 			AddKeys(aPrv, cPrv).
 			SetRedeemScript(redeem).
 			To(bohu, 1000).
@@ -418,7 +380,7 @@ func TestTransactionBuilderWithUncompressedPubKey(t *testing.T) {
 	).ToCoins()[0]
 
 	tx, err := NewTransactionBuilder().
-		AddCoins(bohuCoin).
+		AddCoin(bohuCoin).
 		AddKeys(bohuPrv).
 		To(satoshi, 666666).
 		SetPubKeyUncompressed().
@@ -465,15 +427,15 @@ func TestTransactionBuilderHybrid(t *testing.T) {
 	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	tx, err := NewTransactionBuilder().
-		AddCoins(aliceCoin).
+		AddCoin(aliceCoin).
 		AddKeys(alicePrv).
 		To(satoshi, 10000).
 		Then().
-		AddCoins(bobCoin).
+		AddCoin(bobCoin).
 		AddKeys(bobPrv).
 		To(satoshi, 9000).
 		Then().
-		AddCoins(aliceBobCoin).
+		AddCoin(aliceBobCoin).
 		AddKeys(alicePrv, bobPrv).
 		SetRedeemScript(redeem).
 		To(satoshi, 20000).
@@ -522,15 +484,15 @@ func TestTransactionBuilderFees(t *testing.T) {
 	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
 
 	tx, err := NewTransactionBuilder().
-		AddCoins(aliceCoin).
+		AddCoin(aliceCoin).
 		AddKeys(alicePrv).
 		To(satoshi, 10000).
 		Then().
-		AddCoins(bobCoin).
+		AddCoin(bobCoin).
 		AddKeys(bobPrv).
 		To(satoshi, 9000).
 		Then().
-		AddCoins(aliceBobCoin).
+		AddCoin(aliceBobCoin).
 		AddKeys(alicePrv, bobPrv).
 		SetRedeemScript(redeem).
 		To(satoshi, 20000).
@@ -586,7 +548,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.sendto.nil",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddCoins(aliceCoin).
+					AddCoin(aliceCoin).
 					AddKeys(alicePrv).
 					Then().
 					SetChange(alice).
@@ -602,7 +564,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.change.nil",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddCoins(aliceCoin).
+					AddCoin(aliceCoin).
 					AddKeys(alicePrv).
 					To(satoshi, 1000).
 					Then().
@@ -618,7 +580,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.fee.not.enough",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddCoins(aliceCoin).
+					AddCoin(aliceCoin).
 					AddKeys(alicePrv).
 					To(satoshi, 10000).
 					Then().
@@ -635,7 +597,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.totalout.more.than.totalin",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddCoins(aliceCoin).
+					AddCoin(aliceCoin).
 					AddKeys(alicePrv).
 					To(satoshi, 1000000).
 					Then().
@@ -652,7 +614,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.keys.nil",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddCoins(aliceCoin).
+					AddCoin(aliceCoin).
 					To(satoshi, 1000).
 					Then().
 					SetChange(alice).
@@ -668,7 +630,7 @@ func TestTransactionBuilderError(t *testing.T) {
 			name: "builder.fee.high",
 			fn: func() error {
 				_, err := NewTransactionBuilder().
-					AddCoins(aliceCoin).
+					AddCoin(aliceCoin).
 					To(satoshi, 1000).
 					Then().
 					SetChange(alice).
@@ -711,11 +673,11 @@ func BenchmarkTransactionBuilder(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		_, err := NewTransactionBuilder().
-			AddCoins(aliceCoin).
+			AddCoin(aliceCoin).
 			AddKeys(alicePrv).
 			To(satoshi, 5000).
 			Then().
-			AddCoins(bobCoin).
+			AddCoin(bobCoin).
 			AddKeys(bobPrv).
 			To(satoshi, 5000).
 			Then().
@@ -751,11 +713,11 @@ func BenchmarkTransactionBuilderSigned(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		_, err := NewTransactionBuilder().
-			AddCoins(aliceCoin).
+			AddCoin(aliceCoin).
 			AddKeys(alicePrv).
 			To(satoshi, 5000).
 			Then().
-			AddCoins(bobCoin).
+			AddCoin(bobCoin).
 			AddKeys(bobPrv).
 			To(satoshi, 5000).
 			Then().

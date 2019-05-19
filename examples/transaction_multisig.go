@@ -64,7 +64,7 @@ func main() {
 		).ToCoins()[0]
 
 		tx, err := xcore.NewTransactionBuilder().
-			AddCoins(bohuCoin).
+			AddCoin(bohuCoin).
 			AddKeys(bohuPrv).
 			To(multi, 4000).
 			Then().
@@ -93,7 +93,7 @@ func main() {
 		).ToCoins()[0]
 
 		tx, err := xcore.NewTransactionBuilder().
-			AddCoins(multiCoin).
+			AddCoin(multiCoin).
 			AddKeys(aPrv, cPrv).
 			SetRedeemScript(redeem).
 			To(bohu, 1000).

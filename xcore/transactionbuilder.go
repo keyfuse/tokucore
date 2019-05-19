@@ -36,7 +36,7 @@ type input struct {
 
 // Group -- the group includes from/sendto/changeto.
 type Group struct {
-	coins        []*Coin
+	coin         *Coin
 	keys         []*xcrypto.PrivateKey
 	output       *output
 	redeemScript []byte
@@ -67,33 +67,11 @@ func NewTransactionBuilder() *TransactionBuilder {
 	}
 }
 
-// AddInput -- add the raw input.
-func (b *TransactionBuilder) AddInput(txid string, n uint32, value uint64, finalScript string) *TransactionBuilder {
-	coin := &Coin{
-		txID:   txid,
-		n:      n,
-		value:  value,
-		script: finalScript,
-	}
-	b.AddCoins(coin)
-	return b
-}
-
-// AddOutput -- add the raw output.
-func (b *TransactionBuilder) AddOutput(value uint64, finalScript string) *TransactionBuilder {
-	b.groups[b.idx].stepin = true
-	b.groups[b.idx].output = &output{
-		value:  value,
-		script: finalScript,
-	}
-	return b
-}
-
-// AddCoins -- set the from coin.
-func (b *TransactionBuilder) AddCoins(coins ...*Coin) *TransactionBuilder {
+// AddCoin -- set the from coin.
+func (b *TransactionBuilder) AddCoin(coin *Coin) *TransactionBuilder {
 	b.groups[b.idx].stepin = true
 	b.groups[b.idx].compressed = true
-	b.groups[b.idx].coins = coins
+	b.groups[b.idx].coin = coin
 	return b
 }
 
@@ -195,11 +173,11 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			continue
 		}
 
-		froms := group.coins
+		from := group.coin
 		output := group.output
 
 		// Input check.
-		if froms == nil {
+		if from == nil {
 			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FROM_EMPTY, i)
 		}
 
@@ -210,28 +188,26 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 
 		// Input.
 		{
-			for _, from := range froms {
-				// Hex to TxID.
-				txid, err := xbase.NewIDFromString(from.txID)
-				if err != nil {
-					return nil, err
-				}
-				// Hex to script.
-				script, err := hex.DecodeString(from.script)
-				if err != nil {
-					return nil, err
-				}
-				txin := NewTxIn(txid, from.n, from.value, script, group.redeemScript)
-				txins = append(txins, txin)
-				totalIn += int64(from.value)
-
-				// inputs.
-				input := &input{
-					keys:       group.keys,
-					compressed: group.compressed,
-				}
-				inputs = append(inputs, input)
+			// Hex to TxID.
+			txid, err := xbase.NewIDFromString(from.txID)
+			if err != nil {
+				return nil, err
 			}
+			// Hex to script.
+			script, err := hex.DecodeString(from.script)
+			if err != nil {
+				return nil, err
+			}
+			txin := NewTxIn(txid, from.n, from.value, script, group.redeemScript)
+			txins = append(txins, txin)
+			totalIn += int64(from.value)
+
+			// inputs.
+			input := &input{
+				keys:       group.keys,
+				compressed: group.compressed,
+			}
+			inputs = append(inputs, input)
 		}
 
 		// Output.

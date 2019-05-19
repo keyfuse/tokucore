@@ -43,7 +43,7 @@ func main() {
 		).ToCoins()[0]
 
 		tx, err := xcore.NewTransactionBuilder().
-			AddCoins(bohuCoin).
+			AddCoin(bohuCoin).
 			AddKeys(bohuPrv).
 			To(satoshi, 666666).
 			Then().
@@ -73,7 +73,7 @@ func main() {
 		).ToCoins()[0]
 
 		tx, err := xcore.NewTransactionBuilder().
-			AddCoins(satoshiCoin).
+			AddCoin(satoshiCoin).
 			AddKeys(satoshiPrv).
 			To(bohu, 66666).
 			Then().
