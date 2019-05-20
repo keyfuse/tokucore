@@ -7,10 +7,11 @@ package xcrypto
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 
-	"crypto/ecdsa"
+	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
 
 const (
@@ -30,7 +31,7 @@ type PublicKey ecdsa.PublicKey
 
 // PubKeyFromBytes -- parse bytes to public key.
 func PubKeyFromBytes(key []byte) (*PublicKey, error) {
-	curve := SECP256K1()
+	curve := secp256k1.SECP256K1()
 	pubkey := PublicKey{
 		Curve: curve, // secp256k1 curve
 	}
@@ -54,12 +55,13 @@ func PubKeyFromBytes(key []byte) (*PublicKey, error) {
 
 		pubkey.X = new(big.Int).SetBytes(key[1:33])
 		pubkey.Y = new(big.Int).SetBytes(key[33:])
+		isOdd := (pubkey.Y.Bit(0) == 1)
 		// ybit invalid.
-		if format == pubkeyHybrid && ybit != isOdd(pubkey.Y) {
-			return nil, fmt.Errorf("pubkey.ybit[%v].doesnt.match.oddness[%v]", ybit, isOdd(pubkey.Y))
+		if format == pubkeyHybrid && ybit != isOdd {
+			return nil, fmt.Errorf("pubkey.ybit[%v].doesnt.match.oddness[%v]", ybit, pubkey.Y.Bit(0))
 		}
 	case pubKeyBytesLenCompressed:
-		x, y := SecUnmarshal(curve, key)
+		x, y := secp256k1.SecUnmarshal(curve, key)
 		if x == nil || y == nil {
 			return nil, fmt.Errorf("pubkey.format.invalid:%v", format)
 		}
@@ -97,22 +99,12 @@ func (p *PublicKey) YBytes() []byte {
 	return p.Y.Bytes()
 }
 
-// Add -- add n2 to PublicKey.
-func (p *PublicKey) Add(n2 []byte) *PublicKey {
+// Add -- add p2 to PublicKey.
+func (p *PublicKey) Add(p2 *PublicKey) *PublicKey {
 	x1 := p.X
 	y1 := p.Y
 	curve := p.Curve
 
-	// Private key.
-	// pubkey1 = prvkey1*G
-	// prvkey1 = n1
-	// prvkey2 = n1 + n2
-	// pubkey2 = prvkey2*G = (n1 + n2)*G
-	privkey := PrvKeyFromBytes(n2)
-	p2, err := PubKeyFromBytes(privkey.PubKey().SerializeUncompressed())
-	if err != nil {
-		panic(err)
-	}
 	x2 := p2.X
 	y2 := p2.Y
 	x3, y3 := curve.Add(x1, y1, x2, y2)
@@ -151,7 +143,7 @@ func (p *PublicKey) SerializeUncompressed() []byte {
 
 // SerializeCompressed -- encoding a public key in a 33-byte compressed foramt.
 func (p *PublicKey) SerializeCompressed() []byte {
-	return SecMarshal(p.Curve, p.X, p.Y)
+	return secp256k1.SecMarshal(p.Curve, p.X, p.Y)
 }
 
 // Hash160 -- returns the Hash160 of the compressed public key.
@@ -166,7 +158,7 @@ func (p *PublicKey) SerializeHybrid() []byte {
 
 	// Format.
 	format := pubkeyHybrid
-	if isOdd(p.Y) {
+	if p.Y.Bit(0) == 1 {
 		format |= 0x1
 	}
 	key.WriteByte(format)

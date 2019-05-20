@@ -20,8 +20,7 @@ testxbase:
 	go test -v -race ./xbase
 
 testxcrypto:
-	go test -v -race ./xcrypto
-	go test -v -race ./xcrypto/ripemd160
+	go test -v -race ./xcrypto/...
 
 testxerror:
 	go test -v -race ./xerror
@@ -45,7 +44,7 @@ testxcore:
 
 
 pkgs =	./xbase\
-		./xcrypto\
+		./xcrypto/...\
 		./xerror\
 		./xrpc\
 		./xprotocol\

@@ -3,7 +3,7 @@
 // Copyright (c) 2018-2019 TokuBlock
 // BSD License
 
-package xcrypto
+package secp256k1
 
 import (
 	"crypto/elliptic"
@@ -18,7 +18,8 @@ func SecMarshal(curve elliptic.Curve, x *big.Int, y *big.Int) []byte {
 
 	// 0x02 for even, 0x03 for odd.
 	format := byte(0x02)
-	if isOdd(y) {
+	// is Odd.
+	if y.Bit(0) == 1 {
 		format |= 0x01
 	}
 	ret[0] = format
@@ -52,8 +53,4 @@ func SecUnmarshal(curve elliptic.Curve, data []byte) (*big.Int, *big.Int) {
 		Y.Sub(curveParams.P, Y)
 	}
 	return X, Y
-}
-
-func isOdd(a *big.Int) bool {
-	return a.Bit(0) == 1
 }

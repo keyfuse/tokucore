@@ -3,13 +3,18 @@
 // Copyright (c) 2018-2019 TokuBlock
 // BSD License
 
-package xcrypto
+package schnorr
 
 import (
 	"encoding/hex"
 	"errors"
+	"math/big"
 	"strings"
 	"testing"
+
+	"crypto/ecdsa"
+
+	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
 
 var (
@@ -150,17 +155,22 @@ var (
 )
 
 func TestSchnorrSign(t *testing.T) {
+	curve := secp256k1.SECP256K1()
 	for _, test := range schnorrTests {
 		if test.d == "" {
 			continue
 		}
 		var m [32]byte
-		privbytes, _ := hex.DecodeString(test.d)
-		priv := PrvKeyFromBytes(privbytes)
+
+		d, _ := new(big.Int).SetString(test.d, 16)
+		prv := &ecdsa.PrivateKey{
+			D: d,
+		}
+		prv.Curve = curve
 
 		mbytes, _ := hex.DecodeString(test.m)
 		copy(m[:], mbytes)
-		sig, _ := SchnorrSign(priv, m)
+		sig, _ := Sign(prv, m)
 		got := hex.EncodeToString(sig[:])
 		want := strings.ToLower(test.sig)
 		if want != got {
@@ -173,10 +183,17 @@ func TestSchnorrVerify(t *testing.T) {
 	for _, test := range schnorrTests {
 		var m [32]byte
 		var sig [64]byte
+		curve := secp256k1.SECP256K1()
+
+		t.Logf("%v", test.desc)
 
 		pkbytes, _ := hex.DecodeString(test.pk)
-		pub, _ := PubKeyFromBytes(pkbytes)
-		t.Logf("%v", test.desc)
+		x, y := secp256k1.SecUnmarshal(curve, pkbytes)
+		pub := &ecdsa.PublicKey{
+			Curve: curve,
+			X:     x,
+			Y:     y,
+		}
 
 		mbytes, _ := hex.DecodeString(test.m)
 		copy(m[:], mbytes)
@@ -184,10 +201,66 @@ func TestSchnorrVerify(t *testing.T) {
 		sigbytes, _ := hex.DecodeString(test.sig)
 		copy(sig[:], sigbytes)
 
-		got := SchnorrVerify(pub, m, sig)
+		got := Verify(pub, m, sig)
 		want := test.result
 		if want != got {
 			t.Fatalf("%v, Verify(%s, %s) = %v, want %v", test.desc, test.d, test.m, got, want)
 		}
 	}
+}
+
+func TestSchnorrAggregate(t *testing.T) {
+	var m [32]byte
+	curve := secp256k1.SECP256K1()
+	mbytes, _ := hex.DecodeString("243F6A8885A308D313198A2E03707344A4093822299F31D0082EFA98EC4E6C89")
+	copy(m[:], mbytes)
+
+	d1, _ := new(big.Int).SetString("0000000000000000000000000000000000000000000000000000000000000001", 16)
+	d2, _ := new(big.Int).SetString("B7E151628AED2A6ABF7158809CF4F3C762E7160F38B4DA56A784D9045190CFEF", 16)
+	prv1 := &ecdsa.PrivateKey{
+		D: d1,
+	}
+	prv1.Curve = curve
+	prv2 := &ecdsa.PrivateKey{
+		D: d2,
+	}
+	prv2.Curve = curve
+
+	pkbytes1, _ := hex.DecodeString("0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798")
+	x1, y1 := secp256k1.SecUnmarshal(curve, pkbytes1)
+	pub1 := &ecdsa.PublicKey{
+		Curve: curve,
+		X:     x1,
+		Y:     y1,
+	}
+	pkbytes2, _ := hex.DecodeString("02DFF1D77F2A671C5F36183726DB2341BE58FEAE1DA2DECED843240F7B502BA659")
+	x2, y2 := secp256k1.SecUnmarshal(curve, pkbytes2)
+	pub2 := &ecdsa.PublicKey{
+		Curve: curve,
+		X:     x2,
+		Y:     y2,
+	}
+
+	x3, y3 := curve.Add(pub1.X, pub1.Y, pub2.X, pub2.Y)
+	aggPub := &ecdsa.PublicKey{
+		Curve: curve,
+		X:     x3,
+		Y:     y3,
+	}
+
+	R1 := PartyR(prv1, m)
+	R2 := PartyR(prv2, m)
+	aggR := R1.Add(R2)
+
+	sig1, err := PartySign(prv1, m, aggR, aggPub)
+	t.Logf("sig1:%X, err:%v", sig1, err)
+
+	sig2, err := PartySign(prv2, m, aggR, aggPub)
+	t.Logf("sig2:%X, err:%v", sig2, err)
+
+	aggr, err := PartyAggregate(curve, aggR, sig1, sig2)
+	t.Logf("aggr:%X, err:%v", aggr, err)
+
+	got := Verify(aggPub, m, aggr)
+	t.Logf("check:%v", got)
 }

@@ -7,9 +7,10 @@ package xcrypto
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"math/big"
 
-	"crypto/ecdsa"
+	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
 
 const (
@@ -22,7 +23,7 @@ type PrivateKey ecdsa.PrivateKey
 
 // PrvKeyFromBytes -- returns a private and public key for secp256k1 curve.
 func PrvKeyFromBytes(key []byte) *PrivateKey {
-	curve := SECP256K1()
+	curve := secp256k1.SECP256K1()
 	x, y := curve.ScalarBaseMult(key)
 	priv := &ecdsa.PrivateKey{
 		PublicKey: ecdsa.PublicKey{

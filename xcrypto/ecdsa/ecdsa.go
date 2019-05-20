@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcrypto
+package ecdsa
 
 import (
 	"errors"
@@ -13,14 +13,14 @@ import (
 	"crypto/elliptic"
 )
 
-// EcdsaSign -- generates a deterministic ECDSA signature according to RFC 6979 and BIP62.
-func EcdsaSign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) {
+// Sign -- generates a deterministic ECDSA signature according to RFC 6979 and BIP62.
+func Sign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) {
 	c := priv.PublicKey.Curve
 	D := priv.D
 	N := c.Params().N
 
 	// RFC6979
-	k := nonceRFC6979(N, D, hash)
+	k := NonceRFC6979(N, D, hash)
 
 	// point (x1,y1) = k*G
 	// r = x1
@@ -54,9 +54,9 @@ func EcdsaSign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) 
 	return r, s, nil
 }
 
-// EcdsaVerify -- calls ecdsa.Verify to verify the signature of hash using the public key.
+// Verify -- calls ecdsa.Verify to verify the signature of hash using the public key.
 // Returns true if the signature is valid, false otherwise.
-func EcdsaVerify(pub *ecdsa.PublicKey, hash []byte, r *big.Int, s *big.Int) bool {
+func Verify(pub *ecdsa.PublicKey, hash []byte, r *big.Int, s *big.Int) bool {
 	return ecdsa.Verify(pub, hash, r, s)
 }
 

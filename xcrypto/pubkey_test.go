@@ -270,7 +270,9 @@ func TestPubKeyAdd(t *testing.T) {
 	pubkey1 := prvkey1.PubKey()
 
 	hex2 := []byte{0x02}
-	pubkey2 := pubkey1.Add(hex2)
+	prvkey2 := PrvKeyFromBytes(hex2)
+	pubkey2 := prvkey2.PubKey()
+	pubkey2 = pubkey2.Add(pubkey1)
 
 	hex3 := []byte{0x03}
 	prvkey3 := PrvKeyFromBytes(hex3)

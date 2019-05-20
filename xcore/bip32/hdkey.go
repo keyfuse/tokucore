@@ -153,7 +153,13 @@ func (k *HDKey) Derive(childIdx uint32) (*HDKey, error) {
 		pubkeyBytes := k.pubkey.Serialize()
 		fingerprint := xcrypto.Hash160(pubkeyBytes)
 		childKey.parentFP = fingerprint[:4]
-		childKey.pubkey = k.pubkey.Add(prvkeyBytes)
+
+		privkey := xcrypto.PrvKeyFromBytes(prvkeyBytes)
+		p2, err := xcrypto.PubKeyFromBytes(privkey.PubKey().SerializeUncompressed())
+		if err != nil {
+			return nil, err
+		}
+		childKey.pubkey = k.pubkey.Add(p2)
 	}
 	return childKey, nil
 }

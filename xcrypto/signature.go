@@ -6,10 +6,11 @@
 package xcrypto
 
 import (
+	"encoding/asn1"
 	"fmt"
 	"math/big"
 
-	"encoding/asn1"
+	"github.com/tokublock/tokucore/xcrypto/ecdsa"
 )
 
 // Signature -- a type representing an ecdsa signature.
@@ -35,7 +36,7 @@ func (sig *Signature) Deserialize(der []byte) error {
 
 // Sign -- sign a hash and return the signature with DER format.
 func Sign(hash []byte, prv *PrivateKey) ([]byte, error) {
-	r, s, err := EcdsaSign(prv.ToECDSA(), hash)
+	r, s, err := ecdsa.Sign(prv.ToECDSA(), hash)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +50,7 @@ func Verify(hash []byte, sign []byte, pub *PublicKey) error {
 	if err := sig.Deserialize(sign); err != nil {
 		return err
 	}
-	if !EcdsaVerify(pub.ToECDSA(), hash, sig.R, sig.S) {
+	if !ecdsa.Verify(pub.ToECDSA(), hash, sig.R, sig.S) {
 		return fmt.Errorf("signature.verify.failed")
 	}
 	return nil

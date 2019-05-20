@@ -4,7 +4,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcrypto
+package ecdsa
 
 import (
 	"bytes"
@@ -18,6 +18,55 @@ import (
 var (
 	one = big.NewInt(1)
 )
+
+// NonceRFC6979 generates an ECDSA nonce (`k`) deterministically according to RFC 6979.
+// https://tools.ietf.org/html/rfc6979#section-3.2
+// It takes a 32-byte hash as an input and returns 32-byte nonce to be used in ECDSA algorithm.
+func NonceRFC6979(q, x *big.Int, hash []byte) *big.Int {
+	qlen := q.BitLen()
+	alg := sha256.New
+	holen := alg().Size()
+	rolen := (qlen + 7) >> 3
+	bx := append(int2octets(x, rolen), bits2octets(hash, q, qlen, rolen)...)
+
+	// Step B
+	v := bytes.Repeat([]byte{0x01}, holen)
+
+	// Step C
+	k := bytes.Repeat([]byte{0x00}, holen)
+
+	// Step D
+	k = mac(alg, k, append(append(v, 0x00), bx...), k)
+
+	// Step E
+	v = mac(alg, k, v, v)
+
+	// Step F
+	k = mac(alg, k, append(append(v, 0x01), bx...), k)
+
+	// Step G
+	v = mac(alg, k, v, v)
+
+	// Step H
+	for {
+		// Step H1
+		var t []byte
+
+		// Step H2
+		for len(t) < qlen/8 {
+			v = mac(alg, k, v, v)
+			t = append(t, v...)
+		}
+
+		// Step H3
+		secret := bits2int(t, qlen)
+		if secret.Cmp(one) >= 0 && secret.Cmp(q) < 0 {
+			return secret
+		}
+		k = mac(alg, k, append(v, 0x00), k)
+		v = mac(alg, k, v, v)
+	}
+}
 
 // mac -- returns an HMAC of the given key and message
 func mac(alg func() hash.Hash, k, m, buf []byte) []byte {
@@ -65,53 +114,4 @@ func bits2octets(in []byte, q *big.Int, qlen, rolen int) []byte {
 		return int2octets(z1, rolen)
 	}
 	return int2octets(z2, rolen)
-}
-
-// https://tools.ietf.org/html/rfc6979#section-3.2
-// nonceRFC6979 generates an ECDSA nonce (`k`) deterministically according to RFC 6979.
-// It takes a 32-byte hash as an input and returns 32-byte nonce to be used in ECDSA algorithm.
-func nonceRFC6979(q, x *big.Int, hash []byte) *big.Int {
-	qlen := q.BitLen()
-	alg := sha256.New
-	holen := alg().Size()
-	rolen := (qlen + 7) >> 3
-	bx := append(int2octets(x, rolen), bits2octets(hash, q, qlen, rolen)...)
-
-	// Step B
-	v := bytes.Repeat([]byte{0x01}, holen)
-
-	// Step C
-	k := bytes.Repeat([]byte{0x00}, holen)
-
-	// Step D
-	k = mac(alg, k, append(append(v, 0x00), bx...), k)
-
-	// Step E
-	v = mac(alg, k, v, v)
-
-	// Step F
-	k = mac(alg, k, append(append(v, 0x01), bx...), k)
-
-	// Step G
-	v = mac(alg, k, v, v)
-
-	// Step H
-	for {
-		// Step H1
-		var t []byte
-
-		// Step H2
-		for len(t) < qlen/8 {
-			v = mac(alg, k, v, v)
-			t = append(t, v...)
-		}
-
-		// Step H3
-		secret := bits2int(t, qlen)
-		if secret.Cmp(one) >= 0 && secret.Cmp(q) < 0 {
-			return secret
-		}
-		k = mac(alg, k, append(v, 0x00), k)
-		v = mac(alg, k, v, v)
-	}
 }

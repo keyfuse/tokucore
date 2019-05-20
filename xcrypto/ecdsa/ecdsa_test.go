@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcrypto
+package ecdsa
 
 import (
 	"hash"
@@ -171,7 +171,7 @@ func testEcdsaFixture(f *ecdsaFixture, t *testing.T) {
 		digest = digest[0:g]
 	}
 
-	r, s, err := EcdsaSign(f.key.key, digest)
+	r, s, err := Sign(f.key.key, digest)
 	if err != nil {
 		t.Error(err)
 		return
@@ -203,7 +203,7 @@ func BenchmarkSignP256(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, _, err := EcdsaSign(f.key.key, digest); err != nil {
+		if _, _, err := Sign(f.key.key, digest); err != nil {
 			panic(err)
 		}
 	}
@@ -220,7 +220,7 @@ func BenchmarkVerifyP256(b *testing.B) {
 	if len(digest) > g {
 		digest = digest[0:g]
 	}
-	r, s, _ := EcdsaSign(f.key.key, digest)
+	r, s, _ := Sign(f.key.key, digest)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

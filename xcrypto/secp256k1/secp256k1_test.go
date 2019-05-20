@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcrypto
+package secp256k1
 
 import (
 	"fmt"
