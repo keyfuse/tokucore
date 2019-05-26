@@ -31,13 +31,13 @@ type output struct {
 
 type input struct {
 	compressed bool
-	keys       []*xcrypto.PrivateKey
+	keys       []*xcrypto.PrvKey
 }
 
 // Group -- the group includes from/sendto/changeto.
 type Group struct {
 	coin         *Coin
-	keys         []*xcrypto.PrivateKey
+	keys         []*xcrypto.PrvKey
 	output       *output
 	redeemScript []byte
 	stepin       bool
@@ -76,7 +76,7 @@ func (b *TransactionBuilder) AddCoin(coin *Coin) *TransactionBuilder {
 }
 
 // AddKeys -- set the private keys for signing.
-func (b *TransactionBuilder) AddKeys(keys ...*xcrypto.PrivateKey) *TransactionBuilder {
+func (b *TransactionBuilder) AddKeys(keys ...*xcrypto.PrvKey) *TransactionBuilder {
 	b.groups[b.idx].stepin = true
 	b.groups[b.idx].keys = keys
 	return b

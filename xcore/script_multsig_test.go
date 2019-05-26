@@ -94,7 +94,7 @@ func TestMultiSigScript(t *testing.T) {
 func TestMultiSigScriptDemo(t *testing.T) {
 	hash := xcrypto.DoubleSha256([]byte{0x01, 0x02, 0x03, 0x04})
 
-	var keys []*xcrypto.PrivateKey
+	var keys []*xcrypto.PrvKey
 	var pubkeys [][]byte
 	k1 := xcrypto.PrvKeyFromBytes([]byte{0x01})
 	k2 := xcrypto.PrvKeyFromBytes([]byte{0x02})
@@ -105,7 +105,7 @@ func TestMultiSigScriptDemo(t *testing.T) {
 		pk := k.PubKey().Serialize()
 		pubkeys = append(pubkeys, pk)
 
-		_, err := xcrypto.Sign(hash, k)
+		_, err := xcrypto.EcdsaSign(k, hash)
 		assert.Nil(t, err)
 	}
 

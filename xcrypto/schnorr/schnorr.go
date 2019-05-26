@@ -29,30 +29,29 @@ import (
 //   Let k = k' if jacobi(y(R)) = 1, otherwise let k = n - k'
 //   Let e = int(hash(bytes(x(R)) || bytes(dG) || m)) mod n
 //   The signature is bytes(x(R)) || bytes((k + ed) mod n)
-func Sign(prv *ecdsa.PrivateKey, m [32]byte) ([64]byte, error) {
-	sig := [64]byte{}
+func Sign(prv *ecdsa.PrivateKey, m []byte) (*big.Int, *big.Int, error) {
 	curve := prv.Curve
 
 	D := prv.D
 	N := curve.Params().N
 
 	// k' = int(hash(bytes(d) || m)) mod n
-	d := intToByte(D)
-	k0, err := getK0(m, d, N)
+	d := IntToByte(D)
+	k0, err := GetK0(m, d, N)
 	if err != nil {
-		return sig, err
+		return nil, nil, err
 	}
 
 	// R = k'G
 	Rx, Ry := curve.ScalarBaseMult(k0.Bytes())
-	rX := intToByte(Rx)
-	k := getK(curve, Ry, k0)
+	rX := IntToByte(Rx)
+	k := GetK(curve, Ry, k0)
 
 	// P = dG
 	Px, Py := curve.ScalarBaseMult(d)
 
 	// e = int(hash(bytes(x(R)) || bytes(dG) || m)) mod n
-	e := getE(curve, m, Px, Py, rX)
+	e := GetE(curve, m, Px, Py, rX)
 
 	// ed
 	ed := new(big.Int)
@@ -63,14 +62,11 @@ func Sign(prv *ecdsa.PrivateKey, m [32]byte) ([64]byte, error) {
 	s.Add(k, ed)
 	s.Mod(s, N)
 
-	copy(sig[:32], rX)
-	copy(sig[32:], intToByte(s))
-
 	// Clean.
 	zeroSlice(d)
 	k.SetInt64(0)
 
-	return sig, nil
+	return Rx, s, nil
 }
 
 // Verify -- verify the signature against the public key.
@@ -88,29 +84,23 @@ func Sign(prv *ecdsa.PrivateKey, m [32]byte) ([64]byte, error) {
 //   Let R = sG - eP
 //   Fail if infinite(R)
 //   Fail if jacobi(y(R)) ≠ 1 or x(R) ≠ r
-func Verify(pub *ecdsa.PublicKey, m [32]byte, sig [64]byte) bool {
+func Verify(pub *ecdsa.PublicKey, m []byte, r *big.Int, s *big.Int) bool {
 	curve := pub.Curve
 	P := curve.Params().P
 	N := curve.Params().N
 
-	r := new(big.Int).SetBytes(sig[:32])
-	if r.Cmp(P) > 0 {
+	if r.Cmp(P) > 0 || s.Cmp(N) > 0 {
 		return false
 	}
 
-	s := new(big.Int).SetBytes(sig[32:])
-	if s.Cmp(N) > 0 {
-		return false
-	}
-
-	e := getE(curve, m, pub.X, pub.Y, intToByte(r))
-	sGx, sGy := curve.ScalarBaseMult(intToByte(s))
-	ePx, ePy := curve.ScalarMult(pub.X, pub.Y, intToByte(e))
+	e := GetE(curve, m, pub.X, pub.Y, IntToByte(r))
+	sGx, sGy := curve.ScalarBaseMult(IntToByte(s))
+	ePx, ePy := curve.ScalarMult(pub.X, pub.Y, IntToByte(e))
 
 	// eP Inverse.
 	ePy.Sub(P, ePy)
 
-	// R= sG - eP= sG + (eP inverse)
+	// R=sG-eP=sG+(eP inverse)
 	Rx, Ry := curve.Add(sGx, sGy, ePx, ePy)
 	if (Rx.Sign() == 0 && Ry.Sign() == 0) || (big.Jacobi(Ry, P) != 1) || (Rx.Cmp(r) != 0) {
 		return false
@@ -118,86 +108,8 @@ func Verify(pub *ecdsa.PublicKey, m [32]byte, sig [64]byte) bool {
 	return true
 }
 
-// PartyR -- returns R point.
-func PartyR(prv *ecdsa.PrivateKey, m [32]byte) *Scalar {
-	curve := prv.Curve
-	N := curve.Params().N
-	d := intToByte(prv.D)
-
-	// k' = int(hash(bytes(d) || m)) mod n
-	k0, err := getK0(m, d, N)
-	if err != nil {
-		return nil
-	}
-
-	// R = k'G
-	rx, ry := curve.ScalarBaseMult(k0.Bytes())
-	return NewScalar(curve, rx, ry)
-}
-
-// PartySign -- sign the m with aggregate pub and R.
-func PartySign(prv *ecdsa.PrivateKey, m [32]byte, R *Scalar, pub *ecdsa.PublicKey) ([32]byte, error) {
-	sig := [32]byte{}
-	curve := prv.Curve
-
-	D := prv.D
-	N := curve.Params().N
-
-	// k' = int(hash(bytes(d) || m)) mod n
-	d := intToByte(D)
-	k0, err := getK0(m, d, N)
-	if err != nil {
-		return sig, err
-	}
-	k := getK(curve, R.Y, k0)
-
-	// e = int(hash(bytes(x(R)) || bytes(dG) || m)) mod n
-	e := getE(curve, m, pub.X, pub.Y, intToByte(R.X))
-
-	// ed
-	ed := new(big.Int)
-	ed.Mul(e, D)
-
-	// s = k + ed
-	s := new(big.Int)
-	s.Add(k, ed)
-	s.Mod(s, N)
-
-	copy(sig[:], intToByte(s))
-
-	// Clean.
-	zeroSlice(d)
-	k.SetInt64(0)
-
-	return sig, nil
-}
-
-// PartyAggregate -- aggregate the signatures to one.
-func PartyAggregate(curve elliptic.Curve, R *Scalar, sigs ...[32]byte) ([64]byte, error) {
-	N := curve.Params().N
-	sigFinal := [64]byte{}
-	aggS := new(big.Int)
-
-	for _, sig := range sigs {
-		s := new(big.Int).SetBytes(sig[:])
-		aggS.Add(aggS, s)
-	}
-	copy(sigFinal[:32], intToByte(R.X))
-	copy(sigFinal[32:], intToByte(aggS.Mod(aggS, N)))
-	return sigFinal, nil
-}
-
-func getK(curve elliptic.Curve, Ry, k0 *big.Int) *big.Int {
-	P := curve.Params().P
-	N := curve.Params().N
-
-	if big.Jacobi(Ry, P) == 1 {
-		return k0
-	}
-	return k0.Sub(N, k0)
-}
-
-func getK0(m [32]byte, d []byte, N *big.Int) (*big.Int, error) {
+// GetK0 -- used get k0 under schnorr BIP.
+func GetK0(m []byte, d []byte, N *big.Int) (*big.Int, error) {
 	hash := sha256.Sum256(append(d, m[:]...))
 	i := new(big.Int).SetBytes(hash[:])
 	k0 := i.Mod(i, N)
@@ -207,7 +119,19 @@ func getK0(m [32]byte, d []byte, N *big.Int) (*big.Int, error) {
 	return k0, nil
 }
 
-func getE(curve elliptic.Curve, m [32]byte, Px, Py *big.Int, rX []byte) *big.Int {
+// GetK -- used get k under schnorr BIP.
+func GetK(curve elliptic.Curve, Ry, k0 *big.Int) *big.Int {
+	P := curve.Params().P
+	N := curve.Params().N
+
+	if big.Jacobi(Ry, P) == 1 {
+		return k0
+	}
+	return k0.Sub(N, k0)
+}
+
+// GetE -- used get e under schnorr BIP.
+func GetE(curve elliptic.Curve, m []byte, Px, Py *big.Int, rX []byte) *big.Int {
 	N := curve.Params().N
 	r := append(rX, secp256k1.SecMarshal(curve, Px, Py)...)
 	r = append(r, m[:]...)
@@ -216,7 +140,8 @@ func getE(curve elliptic.Curve, m [32]byte, Px, Py *big.Int, rX []byte) *big.Int
 	return i.Mod(i, N)
 }
 
-func intToByte(i *big.Int) []byte {
+// IntToByte -- used to convert the int to bytes under schnorr BIP.
+func IntToByte(i *big.Int) []byte {
 	b1, b2 := [32]byte{}, i.Bytes()
 	copy(b1[32-len(b2):], b2)
 	return b1[:]

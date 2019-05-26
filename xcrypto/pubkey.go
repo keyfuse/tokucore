@@ -25,14 +25,14 @@ const (
 	pubkeyHybrid       byte = 0x6 // y_bit + x coord + y coord
 )
 
-// PublicKey -- an ecdsa.PublicKey with additional functions to
+// PubKey -- an ecdsa.PubKey with additional functions to
 // serialize in uncompressed, compressed, and hybrid formats.
-type PublicKey ecdsa.PublicKey
+type PubKey ecdsa.PublicKey
 
 // PubKeyFromBytes -- parse bytes to public key.
-func PubKeyFromBytes(key []byte) (*PublicKey, error) {
+func PubKeyFromBytes(key []byte) (*PubKey, error) {
 	curve := secp256k1.SECP256K1()
-	pubkey := PublicKey{
+	pubkey := PubKey{
 		Curve: curve, // secp256k1 curve
 	}
 
@@ -84,23 +84,18 @@ func PubKeyFromBytes(key []byte) (*PublicKey, error) {
 	return &pubkey, nil
 }
 
-// ToECDSA -- returns the public key as a *ecdsa.PublicKey.
-func (p *PublicKey) ToECDSA() *ecdsa.PublicKey {
-	return (*ecdsa.PublicKey)(p)
-}
-
 // XBytes -- returns the x coord bytes.
-func (p *PublicKey) XBytes() []byte {
+func (p *PubKey) XBytes() []byte {
 	return p.X.Bytes()
 }
 
 // YBytes -- returns the y coord bytes.
-func (p *PublicKey) YBytes() []byte {
+func (p *PubKey) YBytes() []byte {
 	return p.Y.Bytes()
 }
 
-// Add -- add p2 to PublicKey.
-func (p *PublicKey) Add(p2 *PublicKey) *PublicKey {
+// Add -- add p2 to PubKey.
+func (p *PubKey) Add(p2 *PubKey) *PubKey {
 	x1 := p.X
 	y1 := p.Y
 	curve := p.Curve
@@ -108,7 +103,7 @@ func (p *PublicKey) Add(p2 *PublicKey) *PublicKey {
 	x2 := p2.X
 	y2 := p2.Y
 	x3, y3 := curve.Add(x1, y1, x2, y2)
-	return &PublicKey{
+	return &PubKey{
 		X:     x3,
 		Y:     y3,
 		Curve: curve,
@@ -116,12 +111,12 @@ func (p *PublicKey) Add(p2 *PublicKey) *PublicKey {
 }
 
 // Serialize -- returns the compressed endcoding.
-func (p *PublicKey) Serialize() []byte {
+func (p *PubKey) Serialize() []byte {
 	return p.SerializeCompressed()
 }
 
 // SerializeUncompressed -- encoding public key in a 65-byte uncompressed format.
-func (p *PublicKey) SerializeUncompressed() []byte {
+func (p *PubKey) SerializeUncompressed() []byte {
 	var key bytes.Buffer
 	byteLen := (p.Curve.Params().BitSize + 7) >> 3
 
@@ -142,17 +137,17 @@ func (p *PublicKey) SerializeUncompressed() []byte {
 }
 
 // SerializeCompressed -- encoding a public key in a 33-byte compressed foramt.
-func (p *PublicKey) SerializeCompressed() []byte {
+func (p *PubKey) SerializeCompressed() []byte {
 	return secp256k1.SecMarshal(p.Curve, p.X, p.Y)
 }
 
 // Hash160 -- returns the Hash160 of the compressed public key.
-func (p *PublicKey) Hash160() []byte {
+func (p *PubKey) Hash160() []byte {
 	return Hash160(p.SerializeCompressed())
 }
 
 // SerializeHybrid -- encoding a public key in a 65-byte hybrid format.
-func (p *PublicKey) SerializeHybrid() []byte {
+func (p *PubKey) SerializeHybrid() []byte {
 	var key bytes.Buffer
 	byteLen := (p.Curve.Params().BitSize + 7) >> 3
 

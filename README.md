@@ -5,7 +5,19 @@
 
 ## tokucore
 
-*tokucore* is a simple Go (golang) library for creating and manipulating bitcoin data structures like creating keys and addresses (HD/BIP32/BIP39/SegWit) or parsing, creating and signing transactions, micropayment.
+*tokucore* is a simple Go (golang) library for creating and manipulating bitcoin data structures like creating keys and addresses (HD/BIP32/BIP39/SegWit) or parsing, creating and signing transactions.
+
+## Overview
+
+* Base58 encoding/decoding
+* Block headers, block and transaction parsing
+* Transaction creation, signature and verification
+* Script parsing and execution
+* BIP 32 (deterministic wallets)
+* BIP 39 (mnemonic code for generating deterministic keys)
+* BIP 173 (Base32 address format for native v0-16 witness outputs)
+* Two-Party ECDSA Threshold Signature Scheme (TSS)
+* Mult-Party Schnorr Threshold Signature Scheme (TSS)
 
 ## Focus
 
@@ -43,8 +55,8 @@ $ make test
 
 ## Applications
 
-- [JustDoBlockchain](https://justdoblockchain.com) - A website Learning Blockchain Demo by Demo.
 - [ShaFish](https://shafish.com) - A web-based, trusted Bitcoin blockchain timestamping platform.
+- [JustDoBlockchain](https://justdoblockchain.com) - A website Learning Blockchain Demo by Demo.
 
 ## Can I trust this code?
 > Don't trust. Verify.

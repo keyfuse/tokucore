@@ -3,7 +3,7 @@
 // Copyright (c) 2019 TokuBlock
 // BSD License
 
-package schnorr
+package secp256k1
 
 import (
 	"math/big"

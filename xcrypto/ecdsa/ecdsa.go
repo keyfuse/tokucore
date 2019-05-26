@@ -30,17 +30,16 @@ func Sign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) {
 		return nil, nil, errors.New("calculated R is zero")
 	}
 
-	// s = (k^-1 (hash + D * r) mod N
-	halfOrder := new(big.Int).Rsh(N, 1)
-	kinv := new(big.Int).ModInverse(k, N)
-	e := hashToInt(hash, c)
+	// s = (hash+D*r)/k mod N
+	e := HashToInt(c, hash)
 	s := new(big.Int).Mul(D, r)
+	kinv := new(big.Int).ModInverse(k, N)
 	s.Add(s, e).Mul(s, kinv).Mod(s, N)
 
-	// https://bitcoin.stackexchange.com/questions/68254/how-can-i-fix-this-non-canonical-signature-s-value-is-unnecessarily-high?rq=1
 	// The signature is composed of two values, the r value and the s value.
 	// If the s value is greater than N/2, which is not allowed.
 	// Just add in some code that if s is greater than N/2, then s = N - s.
+	halfOrder := new(big.Int).Rsh(N, 1)
 	if s.Cmp(halfOrder) == 1 {
 		s.Sub(N, s)
 	}
@@ -50,7 +49,6 @@ func Sign(priv *ecdsa.PrivateKey, hash []byte) (*big.Int, *big.Int, error) {
 
 	// Clean.
 	k.SetInt64(0)
-
 	return r, s, nil
 }
 
@@ -60,14 +58,14 @@ func Verify(pub *ecdsa.PublicKey, hash []byte, r *big.Int, s *big.Int) bool {
 	return ecdsa.Verify(pub, hash, r, s)
 }
 
-// hashToInt converts a hash value to an integer. There is some disagreement
+// HashToInt -- converts a hash value to an integer. There is some disagreement
 // about how this is done. [NSA] suggests that this is done in the obvious
 // manner, but [SECG] truncates the hash to the bit-length of the curve order
 // first. We follow [SECG] because that's what OpenSSL does. Additionally,
 // OpenSSL right shifts excess bits from the number if the hash is too large
 // and we mirror that too.
 // This is borrowed from crypto/ecdsa.
-func hashToInt(hash []byte, c elliptic.Curve) *big.Int {
+func HashToInt(c elliptic.Curve, hash []byte) *big.Int {
 	orderBits := c.Params().N.BitLen()
 	orderBytes := (orderBits + 7) / 8
 	if len(hash) > orderBytes {

@@ -55,8 +55,8 @@ type HDKey struct {
 	chainCode []byte // 32 bytes
 	depth     byte   // 1 bytes
 	isPrivate bool   // Unserialized
-	prvkey    *xcrypto.PrivateKey
-	pubkey    *xcrypto.PublicKey
+	prvkey    *xcrypto.PrvKey
+	pubkey    *xcrypto.PubKey
 }
 
 // NewHDKey -- creates a new master HDKey from a seed.
@@ -242,7 +242,7 @@ func (k *HDKey) HDPublicKey() *HDKey {
 }
 
 // PublicKey -- the ecdsa public key.
-func (k *HDKey) PublicKey() *xcrypto.PublicKey {
+func (k *HDKey) PublicKey() *xcrypto.PubKey {
 	if k.isPrivate {
 		return k.prvkey.PubKey()
 	}
@@ -251,7 +251,7 @@ func (k *HDKey) PublicKey() *xcrypto.PublicKey {
 
 // PrivateKey -- ecdsa private key.
 // If HDKey is public key, it will returns nil.
-func (k *HDKey) PrivateKey() *xcrypto.PrivateKey {
+func (k *HDKey) PrivateKey() *xcrypto.PrvKey {
 	return k.prvkey
 }
 

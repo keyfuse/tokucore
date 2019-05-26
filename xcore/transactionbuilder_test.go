@@ -508,6 +508,126 @@ func TestTransactionBuilderFees(t *testing.T) {
 	t.Logf("actual.size:%v", len(signedTx))
 }
 
+func TestTransactionBuilderTSSP2PKH(t *testing.T) {
+	// Bohu.
+	seed := []byte("this.is.bohu.seed.")
+	bohuHDKey := bip32.NewHDKey(seed)
+	bohuPrv := bohuHDKey.PrivateKey()
+	bohuPub := bohuHDKey.PublicKey()
+	bohu := NewPayToPubKeyHashAddress(bohuPub.Hash160())
+	t.Logf("bohu.addr:%v", bohu.ToString(network.TestNet))
+
+	// Alice Party.
+	aliceSeed := []byte("this.is.alice.seed.")
+	aliceHDKey := bip32.NewHDKey(aliceSeed)
+	alicePrv := aliceHDKey.PrivateKey()
+	alicePub := aliceHDKey.PublicKey()
+	aliceParty, err := xcrypto.NewEcdsaParty(alicePrv)
+	assert.Nil(t, err)
+	encpk1 := aliceParty.EncPk()
+	encpub1 := aliceParty.EncPub()
+
+	// Bob Party.
+	bobSeed := []byte("this.is.bob.seed.")
+	bobHDKey := bip32.NewHDKey(bobSeed)
+	bobPrv := bobHDKey.PrivateKey()
+	bobPub := bobHDKey.PublicKey()
+	bobParty, err := xcrypto.NewEcdsaParty(bobPrv)
+	assert.Nil(t, err)
+	encpk2 := bobParty.EncPk()
+	encpub2 := bobParty.EncPub()
+
+	// Phase 1.
+	sharepub1 := aliceParty.Phase1(bobPub)
+	sharepub2 := bobParty.Phase1(alicePub)
+	sharepub := sharepub1
+	assert.Equal(t, sharepub1, sharepub2)
+
+	// Shared address.
+	shared := NewPayToPubKeyHashAddress(sharepub.Hash160())
+	t.Logf("shared.addr:%v", shared.ToString(network.TestNet))
+
+	// Funding.
+	{
+		bohuCoin := NewCoinBuilder().AddOutput(
+			"12a2e64f5975c29a5f3b3fc79e59461cfa411e3ed0459a3872873265ad9f9979",
+			1,
+			6718017,
+			"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
+		).ToCoins()[0]
+
+		tx, err := NewTransactionBuilder().
+			AddCoin(bohuCoin).
+			AddKeys(bohuPrv).
+			To(shared, 4000).
+			Then().
+			SetChange(bohu).
+			Then().
+			Sign().
+			BuildTransaction()
+		assert.Nil(t, err)
+
+		t.Logf("tx:%v", tx.ToString())
+		// Verify.
+		err = tx.Verify()
+		assert.Nil(t, err)
+		assert.Equal(t, "baf5ac09c6047e0f5e082afe37d4a368e40a40a4025ea60057877ea8998f0c60", tx.ID())
+
+		t.Logf("txid:%v", tx.ID())
+		signedTx := tx.Serialize()
+		t.Logf("funding.signed.tx:%x", signedTx)
+	}
+
+	// Spending.
+	{
+		shareCoin := NewCoinBuilder().AddOutput(
+			"baf5ac09c6047e0f5e082afe37d4a368e40a40a4025ea60057877ea8998f0c60",
+			0,
+			4000,
+			"76a914349209f102f196e4a1e4a1eeba1329825ed80e0b88ac",
+		).ToCoins()[0]
+
+		tx, err := NewTransactionBuilder().
+			AddCoin(shareCoin).
+			To(bohu, 3000).
+			Then().
+			Then().
+			BuildTransaction()
+		assert.Nil(t, err)
+		//t.Logf("tx:%v", tx.ToString())
+
+		idx0sighash := tx.RawSignatureHash(0, SigHashAll)
+		t.Logf("idx0.sighash:%x", idx0sighash)
+
+		// Phase 2.
+		scalarR1 := aliceParty.Phase2(idx0sighash)
+		scalarR2 := bobParty.Phase2(idx0sighash)
+
+		// Phase 3.
+		shareR1 := aliceParty.Phase3(encpk2, encpub2, scalarR2)
+		shareR2 := bobParty.Phase3(encpk1, encpub1, scalarR1)
+		assert.Equal(t, shareR1, shareR2)
+
+		// Phase 4.
+		sig1, err := aliceParty.Phase4(shareR1)
+		assert.Nil(t, err)
+		sig2, err := bobParty.Phase4(shareR2)
+		assert.Nil(t, err)
+
+		// Phase 5.
+		fs1, err := aliceParty.Phase5(shareR1, sig2)
+		assert.Nil(t, err)
+		fs2, err := bobParty.Phase5(shareR2, sig1)
+		assert.Nil(t, err)
+		assert.Equal(t, fs1, fs2)
+		signature0 := fs1
+
+		// Ecdsa Verify.
+		err = xcrypto.EcdsaVerify(sharepub, idx0sighash, signature0)
+		assert.Nil(t, err)
+	}
+}
+
 func TestTransactionBuilderError(t *testing.T) {
 	// Alice.
 	seed := []byte("this.is.alice.seed.")

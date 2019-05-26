@@ -213,7 +213,7 @@ func (tx *Transaction) WitnessID() string {
 }
 
 // SignIndex -- sign specified transaction input with pubkey format.
-func (tx *Transaction) SignIndex(idx int, compressed bool, keys ...*xcrypto.PrivateKey) error {
+func (tx *Transaction) SignIndex(idx int, compressed bool, keys ...*xcrypto.PrvKey) error {
 	txIn := tx.inputs[idx]
 	signs := make([]PubKeySign, 0)
 
@@ -380,7 +380,7 @@ func (tx *Transaction) WitnessSignatureHash(idx int, hashType SigHashType) []byt
 }
 
 // RawSignature -- sign the idx input and return the signature.
-func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrivateKey) ([]byte, error) {
+func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrvKey) ([]byte, error) {
 	// Sanity Check
 	inputs := len(tx.inputs)
 	if idx >= inputs {
@@ -389,7 +389,7 @@ func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrivateKey) ([]byte, e
 
 	txIn := tx.inputs[idx]
 	txIn.SignatureHash = tx.RawSignatureHash(idx, SigHashAll)
-	signature, err := xcrypto.Sign(txIn.SignatureHash, prv)
+	signature, err := xcrypto.EcdsaSign(prv, txIn.SignatureHash)
 	if err != nil {
 		return nil, err
 	}
@@ -397,7 +397,7 @@ func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrivateKey) ([]byte, e
 }
 
 // WitnessSignature -- sign the idx input and return the witness signature.
-func (tx *Transaction) WitnessSignature(idx int, prv *xcrypto.PrivateKey) ([]byte, error) {
+func (tx *Transaction) WitnessSignature(idx int, prv *xcrypto.PrvKey) ([]byte, error) {
 	// Sanity Check
 	inputs := len(tx.inputs)
 	if idx >= inputs {
@@ -406,7 +406,7 @@ func (tx *Transaction) WitnessSignature(idx int, prv *xcrypto.PrivateKey) ([]byt
 
 	txIn := tx.inputs[idx]
 	txIn.SignatureHash = tx.WitnessSignatureHash(idx, SigHashAll)
-	signature, err := xcrypto.Sign(txIn.SignatureHash, prv)
+	signature, err := xcrypto.EcdsaSign(prv, txIn.SignatureHash)
 	if err != nil {
 		return nil, err
 	}
@@ -687,7 +687,7 @@ func (tx *Transaction) Verify() error {
 				if err != nil {
 					return err
 				}
-				err = xcrypto.Verify(hash, signature, pub)
+				err = xcrypto.EcdsaVerify(pub, hash, signature)
 				return err
 			}
 			engine.SetSigVerifyFn(sigVerifyFn)

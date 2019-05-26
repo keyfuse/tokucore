@@ -17,7 +17,7 @@ import (
 type SigHashFn func(hashType byte) []byte
 
 // SigVerifyFn -- verify function for checksig.
-type SigVerifyFn func(hash []byte, signature []byte, pubkey []byte) error
+type SigVerifyFn func(pubkey []byte, hash []byte, signature []byte) error
 
 // Engine -- the virtual matchine to execute the bitcoin scripts.
 type Engine struct {

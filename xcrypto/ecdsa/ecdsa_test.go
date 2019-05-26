@@ -176,6 +176,10 @@ func testEcdsaFixture(f *ecdsaFixture, t *testing.T) {
 		t.Error(err)
 		return
 	}
+	check := Verify(&f.key.key.PublicKey, digest, r, s)
+	if !check {
+		t.Fatal()
+	}
 
 	expectedR := ecdsaLoadInt(f.r)
 	expectedS := ecdsaLoadInt(f.s)

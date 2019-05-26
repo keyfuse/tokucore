@@ -234,11 +234,11 @@ func TestPubKeys(t *testing.T) {
 		var pkStr []byte
 		switch test.format {
 		case pubkeyUncompressed:
-			pkStr = (*PublicKey)(pk).SerializeUncompressed()
+			pkStr = (*PubKey)(pk).SerializeUncompressed()
 		case pubkeyCompressed:
-			pkStr = (*PublicKey)(pk).SerializeCompressed()
+			pkStr = (*PubKey)(pk).SerializeCompressed()
 		case pubkeyHybrid:
-			pkStr = (*PublicKey)(pk).SerializeHybrid()
+			pkStr = (*PubKey)(pk).SerializeHybrid()
 		}
 		assert.Equal(t, test.key, pkStr)
 	}

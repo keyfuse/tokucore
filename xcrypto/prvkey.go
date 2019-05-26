@@ -18,11 +18,11 @@ const (
 	PrvKeyBytesLen = 32
 )
 
-// PrivateKey --
-type PrivateKey ecdsa.PrivateKey
+// PrvKey --
+type PrvKey ecdsa.PrivateKey
 
 // PrvKeyFromBytes -- returns a private and public key for secp256k1 curve.
-func PrvKeyFromBytes(key []byte) *PrivateKey {
+func PrvKeyFromBytes(key []byte) *PrvKey {
 	curve := secp256k1.SECP256K1()
 	x, y := curve.ScalarBaseMult(key)
 	priv := &ecdsa.PrivateKey{
@@ -33,17 +33,17 @@ func PrvKeyFromBytes(key []byte) *PrivateKey {
 		},
 		D: new(big.Int).SetBytes(key),
 	}
-	return (*PrivateKey)(priv)
+	return (*PrvKey)(priv)
 }
 
 // PubKey -- returns ecdsa public key.
-func (p *PrivateKey) PubKey() *PublicKey {
-	return (*PublicKey)(&p.PublicKey)
+func (p *PrvKey) PubKey() *PubKey {
+	return (*PubKey)(&p.PublicKey)
 }
 
-// Add -- add n2 to PrivateKey.
+// Add -- add n2 to PrvKey.
 // k3 = (k1 + k2) mod N
-func (p *PrivateKey) Add(n2 []byte) *PrivateKey {
+func (p *PrvKey) Add(n2 []byte) *PrvKey {
 	kint1 := p.D
 	kint2 := new(big.Int).SetBytes(n2)
 	kint1.Add(kint1, kint2)
@@ -51,18 +51,13 @@ func (p *PrivateKey) Add(n2 []byte) *PrivateKey {
 	return PrvKeyFromBytes(kint1.Bytes())
 }
 
-// ToECDSA -- returns the private key as a *ecdsa.PrivateKey.
-func (p *PrivateKey) ToECDSA() *ecdsa.PrivateKey {
-	return (*ecdsa.PrivateKey)(p)
-}
-
 // Serialize --
 // returns the private key number d as a big-endian binary-encoded
 // number, padded to a length of 32 bytes.
-func (p *PrivateKey) Serialize() []byte {
+func (p *PrvKey) Serialize() []byte {
 	var key bytes.Buffer
 
-	dBytes := p.ToECDSA().D.Bytes()
+	dBytes := p.D.Bytes()
 	for i := 0; i < (PrvKeyBytesLen - len(dBytes)); i++ {
 		key.WriteByte(0x0)
 	}

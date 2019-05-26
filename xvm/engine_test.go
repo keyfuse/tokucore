@@ -80,7 +80,7 @@ func TestEngine(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			return xcrypto.Verify(hash, signature, pub)
+			return xcrypto.EcdsaVerify(pub, hash, signature)
 		}
 		engine.SetSigVerifyFn(verifierFn)
 
