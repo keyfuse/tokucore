@@ -625,6 +625,20 @@ func TestTransactionBuilderTSSP2PKH(t *testing.T) {
 		// Ecdsa Verify.
 		err = xcrypto.EcdsaVerify(sharepub, idx0sighash, signature0)
 		assert.Nil(t, err)
+
+		finalsig := append(signature0, byte(SigHashAll))
+		signs := make([]PubKeySign, 0)
+		signs = append(signs, PubKeySign{PubKey: sharepub.SerializeCompressed(), Signature: finalsig})
+		tx.EmbedIdxSignature(0, signs)
+		t.Logf("tx:%v", tx.ToString())
+		// Verify.
+		err = tx.Verify()
+		assert.Nil(t, err)
+		assert.Equal(t, "5784c155eccfbf0ec636698b99b65c5d32417134443d789edb82bbf877f33f90", tx.ID())
+
+		t.Logf("txid:%v", tx.ID())
+		signedTx := tx.Serialize()
+		t.Logf("spending.signed.tx:%x", signedTx)
 	}
 }
 
