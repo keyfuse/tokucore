@@ -275,6 +275,14 @@ func (tx *Transaction) EmbedIdxSignature(idx int, signs []PubKeySign) error {
 	return nil
 }
 
+// EmbedIdxEcdsaSignature -- used to embed the raw ecdsa signature.
+func (tx *Transaction) EmbedIdxEcdsaSignature(idx int, pubkey *xcrypto.PubKey, ecdsaSig []byte) error {
+	var signs []PubKeySign
+	finalsig := append(ecdsaSig, byte(SigHashAll))
+	signs = append(signs, PubKeySign{PubKey: pubkey.SerializeCompressed(), Signature: finalsig})
+	return tx.EmbedIdxSignature(idx, signs)
+}
+
 // RawSignatureHash -- returns transaction hash used to get signed/verified.
 func (tx *Transaction) RawSignatureHash(idx int, hashType SigHashType) []byte {
 	buffer := xbase.NewBuffer()

@@ -50,6 +50,10 @@ $ make test
 - [Create a Transaction with P2WPKH SegWit Input](examples/transaction_p2wpkh.go)
 - [Create a Transaction with P2WSH  SegWit Output](examples/transaction_p2wsh.go)
 - [Create a Transaction with P2WSH  SegWit Input](examples/transaction_p2wsh.go)
+- [Create a Two-Party-Threshold ECDSA Transaction with P2PKH Output](examples/two_party_ecdsa_transaction_p2pkh.go)
+- [Create a Two-Party-Threshold ECDSA Transaction with P2PKH Input](examples/two_party_ecdsa_transaction_p2pkh.go)
+- [Create a Two-Party-Threshold ECDSA Transaction with P2WPKH SegWit Output](examples/two_party_ecdsa_transaction_p2wpkh.go)
+- [Create a Two-Party-Threshold ECDSA Transaction with P2WPKH SegWit Input](examples/two_party_ecdsa_transaction_p2wpkh.go)
 - [HDWallet](examples/hdwallet.go)
 - [Mnemonic](examples/bip39.go)
 
