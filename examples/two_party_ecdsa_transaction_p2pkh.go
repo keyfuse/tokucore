@@ -33,20 +33,14 @@ func main() {
 	aliceSeed := []byte("this.is.alice.seed.")
 	aliceHDKey := bip32.NewHDKey(aliceSeed)
 	alicePrv := aliceHDKey.PrivateKey()
-	aliceParty, err := xcrypto.NewEcdsaParty(alicePrv)
-	assertNil(err)
-	encpk1 := aliceParty.EncPk()
-	encpub1 := aliceParty.EncPub()
+	aliceParty := xcrypto.NewEcdsaParty(alicePrv)
 
 	// Bob Party.
 	bobSeed := []byte("this.is.bob.seed.")
 	bobHDKey := bip32.NewHDKey(bobSeed)
 	bobPrv := bobHDKey.PrivateKey()
 	bobPub := bobHDKey.PublicKey()
-	bobParty, err := xcrypto.NewEcdsaParty(bobPrv)
-	assertNil(err)
-	encpk2 := bobParty.EncPk()
-	encpub2 := bobParty.EncPub()
+	bobParty := xcrypto.NewEcdsaParty(bobPrv)
 
 	// Phase 1.
 	sharepub1 := aliceParty.Phase1(bobPub)
@@ -107,15 +101,15 @@ func main() {
 		idx0sighash := tx.RawSignatureHash(0, xcore.SigHashAll)
 
 		// Phase 2.
-		scalarR1 := aliceParty.Phase2(idx0sighash)
-		scalarR2 := bobParty.Phase2(idx0sighash)
+		_, _, scalarR1 := aliceParty.Phase2(idx0sighash)
+		encpk2, encpub2, scalarR2 := bobParty.Phase2(idx0sighash)
 
 		// Phase 3.
-		shareR1 := aliceParty.Phase3(encpk2, encpub2, scalarR2)
-		shareR2 := bobParty.Phase3(encpk1, encpub1, scalarR1)
+		shareR1 := aliceParty.Phase3(scalarR2)
+		shareR2 := bobParty.Phase3(scalarR1)
 
 		// Phase 4.
-		sig2, err := bobParty.Phase4(shareR2)
+		sig2, err := bobParty.Phase4(encpk2, encpub2, shareR2)
 		assertNil(err)
 
 		// Phase 5.

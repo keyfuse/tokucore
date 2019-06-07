@@ -522,20 +522,14 @@ func TestTransactionBuilderTSSP2PKH(t *testing.T) {
 	aliceHDKey := bip32.NewHDKey(aliceSeed)
 	alicePrv := aliceHDKey.PrivateKey()
 	alicePub := aliceHDKey.PublicKey()
-	aliceParty, err := xcrypto.NewEcdsaParty(alicePrv)
-	assert.Nil(t, err)
-	encpk1 := aliceParty.EncPk()
-	encpub1 := aliceParty.EncPub()
+	aliceParty := xcrypto.NewEcdsaParty(alicePrv)
 
 	// Bob Party.
 	bobSeed := []byte("this.is.bob.seed.")
 	bobHDKey := bip32.NewHDKey(bobSeed)
 	bobPrv := bobHDKey.PrivateKey()
 	bobPub := bobHDKey.PublicKey()
-	bobParty, err := xcrypto.NewEcdsaParty(bobPrv)
-	assert.Nil(t, err)
-	encpk2 := bobParty.EncPk()
-	encpub2 := bobParty.EncPub()
+	bobParty := xcrypto.NewEcdsaParty(bobPrv)
 
 	// Phase 1.
 	sharepub1 := aliceParty.Phase1(bobPub)
@@ -598,18 +592,18 @@ func TestTransactionBuilderTSSP2PKH(t *testing.T) {
 		t.Logf("idx0.sighash:%x", idx0sighash)
 
 		// Phase 2.
-		scalarR1 := aliceParty.Phase2(idx0sighash)
-		scalarR2 := bobParty.Phase2(idx0sighash)
+		encpk1, encpub1, scalarR1 := aliceParty.Phase2(idx0sighash)
+		encpk2, encpub2, scalarR2 := bobParty.Phase2(idx0sighash)
 
 		// Phase 3.
-		shareR1 := aliceParty.Phase3(encpk2, encpub2, scalarR2)
-		shareR2 := bobParty.Phase3(encpk1, encpub1, scalarR1)
+		shareR1 := aliceParty.Phase3(scalarR2)
+		shareR2 := bobParty.Phase3(scalarR1)
 		assert.Equal(t, shareR1, shareR2)
 
 		// Phase 4.
-		sig1, err := aliceParty.Phase4(shareR1)
+		sig1, err := aliceParty.Phase4(encpk2, encpub2, shareR1)
 		assert.Nil(t, err)
-		sig2, err := bobParty.Phase4(shareR2)
+		sig2, err := bobParty.Phase4(encpk1, encpub1, shareR2)
 		assert.Nil(t, err)
 
 		// Phase 5.
@@ -649,20 +643,14 @@ func TestTransactionBuilderTSSP2WPKH(t *testing.T) {
 	aliceHDKey := bip32.NewHDKey(aliceSeed)
 	alicePrv := aliceHDKey.PrivateKey()
 	alicePub := aliceHDKey.PublicKey()
-	aliceParty, err := xcrypto.NewEcdsaParty(alicePrv)
-	assert.Nil(t, err)
-	encpk1 := aliceParty.EncPk()
-	encpub1 := aliceParty.EncPub()
+	aliceParty := xcrypto.NewEcdsaParty(alicePrv)
 
 	// Bob Party.
 	bobSeed := []byte("this.is.bob.seed.")
 	bobHDKey := bip32.NewHDKey(bobSeed)
 	bobPrv := bobHDKey.PrivateKey()
 	bobPub := bobHDKey.PublicKey()
-	bobParty, err := xcrypto.NewEcdsaParty(bobPrv)
-	assert.Nil(t, err)
-	encpk2 := bobParty.EncPk()
-	encpub2 := bobParty.EncPub()
+	bobParty := xcrypto.NewEcdsaParty(bobPrv)
 
 	// Phase 1.
 	sharepub1 := aliceParty.Phase1(bobPub)
@@ -725,18 +713,18 @@ func TestTransactionBuilderTSSP2WPKH(t *testing.T) {
 		t.Logf("idx0.sighash:%x", idx0sighash)
 
 		// Phase 2.
-		scalarR1 := aliceParty.Phase2(idx0sighash)
-		scalarR2 := bobParty.Phase2(idx0sighash)
+		encpk1, encpub1, scalarR1 := aliceParty.Phase2(idx0sighash)
+		encpk2, encpub2, scalarR2 := bobParty.Phase2(idx0sighash)
 
 		// Phase 3.
-		shareR1 := aliceParty.Phase3(encpk2, encpub2, scalarR2)
-		shareR2 := bobParty.Phase3(encpk1, encpub1, scalarR1)
+		shareR1 := aliceParty.Phase3(scalarR2)
+		shareR2 := bobParty.Phase3(scalarR1)
 		assert.Equal(t, shareR1, shareR2)
 
 		// Phase 4.
-		sig1, err := aliceParty.Phase4(shareR1)
+		sig1, err := aliceParty.Phase4(encpk2, encpub2, shareR1)
 		assert.Nil(t, err)
-		sig2, err := bobParty.Phase4(shareR2)
+		sig2, err := bobParty.Phase4(encpk1, encpub1, shareR2)
 		assert.Nil(t, err)
 
 		// Phase 5.

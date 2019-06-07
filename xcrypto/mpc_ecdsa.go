@@ -31,48 +31,20 @@ type EcdsaParty struct {
 	curve  elliptic.Curve
 	encpk  *big.Int
 	encprv *paillier.PrvKey
-	encpub *paillier.PubKey
-
-	encpk2  *big.Int
-	encpub2 *paillier.PubKey
 }
 
 // NewEcdsaParty -- creates new EcdsaParty.
-func NewEcdsaParty(prv *PrvKey) (*EcdsaParty, error) {
+func NewEcdsaParty(prv *PrvKey) *EcdsaParty {
 	pub := prv.PubKey()
 	curve := pub.Curve
 	N := curve.Params().N
 
-	// Paillier key pair.
-	encpub, encprv, err := paillier.GenerateKeyPair(bitlen)
-	if err != nil {
-		return nil, err
-	}
-
-	// Homomorphic Encryption of party pk.
-	encpk, err := encpub.Encrypt(prv.D)
-	if err != nil {
-		return nil, err
-	}
 	return &EcdsaParty{
-		N:      N,
-		prv:    prv,
-		pub:    pub,
-		curve:  curve,
-		encpub: encpub,
-		encprv: encprv,
-		encpk:  encpk,
-	}, nil
-}
-
-// EncPk -- return the homomorphic encryption of the private key.
-func (party *EcdsaParty) EncPk() *big.Int {
-	return party.encpk
-}
-
-// EncPub -- return the paillier public key.
-func (party *EcdsaParty) EncPub() *paillier.PubKey {
-	return party.encpub
+		N:     N,
+		prv:   prv,
+		pub:   pub,
+		curve: curve,
+	}
 }
 
 // Phase1 -- used to generate final pubkey of parties.
@@ -88,13 +60,26 @@ func (party *EcdsaParty) Phase1(pub2 *PubKey) *PubKey {
 
 // Phase2 -- used to generate k, kinv, scalarR.
 // Return the party scalar R.
-func (party *EcdsaParty) Phase2(hash []byte) *secp256k1.Scalar {
+func (party *EcdsaParty) Phase2(hash []byte) (*big.Int, *paillier.PubKey, *secp256k1.Scalar) {
 	N := party.N
 	prv := party.prv
 	pub := prv.PubKey()
 	curve := pub.Curve
-
 	party.hash = hash
+
+	// Paillier key pair.
+	encpub, encprv, err := paillier.GenerateKeyPair(bitlen)
+	if err != nil {
+		return nil, nil, nil
+	}
+	party.encprv = encprv
+
+	// Homomorphic Encryption of party pk.
+	encpk, err := encpub.Encrypt(prv.D)
+	if err != nil {
+		return nil, nil, nil
+	}
+	party.encpk = encpk
 
 	// RFC6979 K nonce.
 	k := xecdsa.NonceRFC6979(N, prv.D, hash)
@@ -103,16 +88,14 @@ func (party *EcdsaParty) Phase2(hash []byte) *secp256k1.Scalar {
 	party.kinv = kinv
 
 	rx, ry := curve.ScalarBaseMult(k.Bytes())
-	return secp256k1.NewScalar(curve, rx, ry)
+	return encpk, encpub, secp256k1.NewScalar(curve, rx, ry)
 }
 
-// Phase3 -- set party2's {paillier pubkey2, r2, and encpk2} to this party.
+// Phase3 -- set party2's r2 to this party.
 // Return the shared R.
-func (party *EcdsaParty) Phase3(encpk2 *big.Int, encpub2 *paillier.PubKey, r2 *secp256k1.Scalar) *secp256k1.Scalar {
+func (party *EcdsaParty) Phase3(r2 *secp256k1.Scalar) *secp256k1.Scalar {
 	k := party.k
 	curve := party.curve
-	party.encpk2 = encpk2
-	party.encpub2 = encpub2
 	rx, ry := curve.ScalarMult(r2.X, r2.Y, k.Bytes())
 
 	return secp256k1.NewScalar(curve, rx, ry)
@@ -120,7 +103,7 @@ func (party *EcdsaParty) Phase3(encpk2 *big.Int, encpub2 *paillier.PubKey, r2 *s
 
 // Phase4 -- generate the homomorphic encryption signature of this party.
 // Return the homomorphic ciphertext.
-func (party *EcdsaParty) Phase4(shareR *secp256k1.Scalar) (*big.Int, error) {
+func (party *EcdsaParty) Phase4(encpk2 *big.Int, encpub2 *paillier.PubKey, shareR *secp256k1.Scalar) (*big.Int, error) {
 	var err error
 	var ct *big.Int
 
@@ -129,8 +112,6 @@ func (party *EcdsaParty) Phase4(shareR *secp256k1.Scalar) (*big.Int, error) {
 	kinv := party.kinv
 	hash := party.hash
 	curve := party.curve
-	encpk2 := party.encpk2
-	encpub2 := party.encpub2
 
 	// s’=(z+r⋅e(pk2)⋅pk1)/k1
 	z := xecdsa.HashToInt(curve, hash)
