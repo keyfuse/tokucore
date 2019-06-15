@@ -6,7 +6,7 @@ clean:
 	@go clean
 
 test:
-	go get github.com/stretchr/testify/assert
+	go get -v github.com/stretchr/testify/assert
 	@echo "--> Testing..."
 	@$(MAKE) testxbase
 	@$(MAKE) testxcrypto
@@ -59,7 +59,7 @@ fmt:
 	gofmt -s -w ./
 
 coverage:
-	go get github.com/pierrre/gotestcover
+	go get -v github.com/pierrre/gotestcover
 	gotestcover -coverprofile=coverage.out -v $(pkgs)
 	go tool cover -html=coverage.out
 

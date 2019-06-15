@@ -118,7 +118,7 @@ func main() {
 		sharesig := fs1
 
 		// EmbedIdxSignature.
-		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig)
+		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, xcore.SigHashAll)
 
 		// Verify.
 		err = tx.Verify()

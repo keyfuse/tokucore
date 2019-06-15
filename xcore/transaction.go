@@ -115,7 +115,6 @@ type Transaction struct {
 	lockTime     uint32
 	inputs       []*TxIn
 	outputs      []*TxOut
-	sigHashType  SigHashType
 	hashPrevouts []byte
 	hashSequence []byte
 	hashOutputs  []byte
@@ -124,14 +123,8 @@ type Transaction struct {
 // NewTransaction -- creates a new Transaction.
 func NewTransaction() *Transaction {
 	return &Transaction{
-		version:     1,
-		sigHashType: SigHashAll,
+		version: 1,
 	}
-}
-
-// SetSigHashType -- set the sighash type(default SigHashAll).
-func (tx *Transaction) SetSigHashType(typ SigHashType) {
-	tx.sigHashType = typ
 }
 
 // SetVersion -- set the tx version(default 1).
@@ -213,7 +206,7 @@ func (tx *Transaction) WitnessID() string {
 }
 
 // SignIndex -- sign specified transaction input with pubkey format.
-func (tx *Transaction) SignIndex(idx int, compressed bool, keys ...*xcrypto.PrvKey) error {
+func (tx *Transaction) SignIndex(idx int, compressed bool, hashType SigHashType, keys ...*xcrypto.PrvKey) error {
 	txIn := tx.inputs[idx]
 	signs := make([]PubKeySign, 0)
 
@@ -235,11 +228,11 @@ func (tx *Transaction) SignIndex(idx int, compressed bool, keys ...*xcrypto.PrvK
 		}
 
 		if txIn.HasWitness() {
-			if signature, err = tx.WitnessSignature(idx, key); err != nil {
+			if signature, err = tx.WitnessSignature(idx, hashType, key); err != nil {
 				return err
 			}
 		} else {
-			if signature, err = tx.RawSignature(idx, key); err != nil {
+			if signature, err = tx.RawSignature(idx, hashType, key); err != nil {
 				return err
 			}
 		}
@@ -276,9 +269,10 @@ func (tx *Transaction) EmbedIdxSignature(idx int, signs []PubKeySign) error {
 }
 
 // EmbedIdxEcdsaSignature -- used to embed the raw ecdsa signature.
-func (tx *Transaction) EmbedIdxEcdsaSignature(idx int, pubkey *xcrypto.PubKey, ecdsaSig []byte) error {
+func (tx *Transaction) EmbedIdxEcdsaSignature(idx int, pubkey *xcrypto.PubKey, ecdsaSig []byte, hashType SigHashType) error {
 	var signs []PubKeySign
-	finalsig := append(ecdsaSig, byte(SigHashAll))
+
+	finalsig := append(ecdsaSig, byte(hashType))
 	signs = append(signs, PubKeySign{PubKey: pubkey.SerializeCompressed(), Signature: finalsig})
 	return tx.EmbedIdxSignature(idx, signs)
 }
@@ -302,6 +296,8 @@ func (tx *Transaction) RawSignatureHash(idx int, hashType SigHashType) []byte {
 					script := xvm.RemoveOpcode(in.FinalLockingScript, byte(xvm.OP_CODESEPARATOR))
 					buffer.WriteVarBytes(script)
 				}
+			} else {
+				buffer.WriteVarBytes(nil)
 			}
 			buffer.WriteU32(in.Sequence)
 		}
@@ -388,7 +384,7 @@ func (tx *Transaction) WitnessSignatureHash(idx int, hashType SigHashType) []byt
 }
 
 // RawSignature -- sign the idx input and return the signature.
-func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrvKey) ([]byte, error) {
+func (tx *Transaction) RawSignature(idx int, hashType SigHashType, prv *xcrypto.PrvKey) ([]byte, error) {
 	// Sanity Check
 	inputs := len(tx.inputs)
 	if idx >= inputs {
@@ -396,16 +392,16 @@ func (tx *Transaction) RawSignature(idx int, prv *xcrypto.PrvKey) ([]byte, error
 	}
 
 	txIn := tx.inputs[idx]
-	txIn.SignatureHash = tx.RawSignatureHash(idx, SigHashAll)
+	txIn.SignatureHash = tx.RawSignatureHash(idx, hashType)
 	signature, err := xcrypto.EcdsaSign(prv, txIn.SignatureHash)
 	if err != nil {
 		return nil, err
 	}
-	return append(signature, byte(tx.sigHashType)), nil
+	return append(signature, byte(hashType)), nil
 }
 
 // WitnessSignature -- sign the idx input and return the witness signature.
-func (tx *Transaction) WitnessSignature(idx int, prv *xcrypto.PrvKey) ([]byte, error) {
+func (tx *Transaction) WitnessSignature(idx int, hashType SigHashType, prv *xcrypto.PrvKey) ([]byte, error) {
 	// Sanity Check
 	inputs := len(tx.inputs)
 	if idx >= inputs {
@@ -413,12 +409,12 @@ func (tx *Transaction) WitnessSignature(idx int, prv *xcrypto.PrvKey) ([]byte, e
 	}
 
 	txIn := tx.inputs[idx]
-	txIn.SignatureHash = tx.WitnessSignatureHash(idx, SigHashAll)
+	txIn.SignatureHash = tx.WitnessSignatureHash(idx, hashType)
 	signature, err := xcrypto.EcdsaSign(prv, txIn.SignatureHash)
 	if err != nil {
 		return nil, err
 	}
-	return append(signature, byte(tx.sigHashType)), nil
+	return append(signature, byte(hashType)), nil
 }
 
 // HasWitness -- returns whether the inputs contain witness datas.
@@ -706,7 +702,7 @@ func (tx *Transaction) Verify() error {
 		unlocking := in.RawUnlockingScript
 		err := engine.Verify(unlocking, locking)
 		if err != nil {
-			return err
+			return xerror.NewError(Errors, ER_TRANSACTION_VERIFY_FAILED, i, xbase.NewIDToString(in.Hash), in.Index)
 		}
 	}
 	return nil

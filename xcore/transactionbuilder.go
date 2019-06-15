@@ -30,8 +30,9 @@ type output struct {
 }
 
 type input struct {
-	compressed bool
-	keys       []*xcrypto.PrvKey
+	compressed  bool
+	sigHashType SigHashType
+	keys        []*xcrypto.PrvKey
 }
 
 // Group -- the group includes from/sendto/changeto.
@@ -39,9 +40,9 @@ type Group struct {
 	coin         *Coin
 	keys         []*xcrypto.PrvKey
 	output       *output
-	redeemScript []byte
-	stepin       bool
 	compressed   bool
+	redeemScript []byte
+	sigHashType  SigHashType
 }
 
 // TransactionBuilder --
@@ -69,22 +70,21 @@ func NewTransactionBuilder() *TransactionBuilder {
 
 // AddCoin -- set the from coin.
 func (b *TransactionBuilder) AddCoin(coin *Coin) *TransactionBuilder {
-	b.groups[b.idx].stepin = true
-	b.groups[b.idx].compressed = true
 	b.groups[b.idx].coin = coin
+	b.groups[b.idx].compressed = true
+	// Default is SigHashAll.
+	b.groups[b.idx].sigHashType = SigHashAll
 	return b
 }
 
 // AddKeys -- set the private keys for signing.
 func (b *TransactionBuilder) AddKeys(keys ...*xcrypto.PrvKey) *TransactionBuilder {
-	b.groups[b.idx].stepin = true
 	b.groups[b.idx].keys = keys
 	return b
 }
 
 // To -- set the to address and value.
 func (b *TransactionBuilder) To(addr Address, value uint64) *TransactionBuilder {
-	b.groups[b.idx].stepin = true
 	b.groups[b.idx].output = &output{
 		value: value,
 		addr:  addr,
@@ -94,7 +94,6 @@ func (b *TransactionBuilder) To(addr Address, value uint64) *TransactionBuilder 
 
 // SetRedeemScript -- set the redeemscript to group.
 func (b *TransactionBuilder) SetRedeemScript(redeem []byte) *TransactionBuilder {
-	b.groups[b.idx].stepin = true
 	b.groups[b.idx].redeemScript = redeem
 	return b
 }
@@ -102,6 +101,12 @@ func (b *TransactionBuilder) SetRedeemScript(redeem []byte) *TransactionBuilder 
 // SetPubKeyUncompressed -- set the pubkey to uncompressed format.
 func (b *TransactionBuilder) SetPubKeyUncompressed() *TransactionBuilder {
 	b.groups[b.idx].compressed = false
+	return b
+}
+
+// SetSigHashType -- set the SigHashType of this input.
+func (b *TransactionBuilder) SetSigHashType(typ SigHashType) *TransactionBuilder {
+	b.groups[b.idx].sigHashType = typ
 	return b
 }
 
@@ -168,71 +173,71 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 	var txouts []*TxOut
 	var changeTxOut *TxOut
 
-	for i, group := range b.groups {
-		if !group.stepin {
-			continue
-		}
-
-		from := group.coin
-		output := group.output
-
-		// Input check.
-		if from == nil {
-			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FROM_EMPTY, i)
-		}
-
-		// Output check.
-		if output == nil {
-			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SENDTO_EMPTY, i)
-		}
+	for _, group := range b.groups {
+		grpinput := group.coin
+		grpoutput := group.output
 
 		// Input.
 		{
-			// Hex to TxID.
-			txid, err := xbase.NewIDFromString(from.txID)
-			if err != nil {
-				return nil, err
-			}
-			// Hex to script.
-			script, err := hex.DecodeString(from.script)
-			if err != nil {
-				return nil, err
-			}
-			txin := NewTxIn(txid, from.n, from.value, script, group.redeemScript)
-			txins = append(txins, txin)
-			totalIn += int64(from.value)
+			if grpinput != nil {
+				// Hex to TxID.
+				txid, err := xbase.NewIDFromString(grpinput.txID)
+				if err != nil {
+					return nil, err
+				}
+				// Hex to script.
+				script, err := hex.DecodeString(grpinput.script)
+				if err != nil {
+					return nil, err
+				}
+				txin := NewTxIn(txid, grpinput.n, grpinput.value, script, group.redeemScript)
+				txins = append(txins, txin)
+				totalIn += int64(grpinput.value)
 
-			// inputs.
-			input := &input{
-				keys:       group.keys,
-				compressed: group.compressed,
+				// inputs.
+				input := &input{
+					keys:        group.keys,
+					compressed:  group.compressed,
+					sigHashType: group.sigHashType,
+				}
+				inputs = append(inputs, input)
 			}
-			inputs = append(inputs, input)
 		}
 
 		// Output.
 		{
-			if output != nil {
+			if grpoutput != nil {
 				var err error
 				var script []byte
 
-				if output.addr != nil {
-					script, err = PayToAddrScript(output.addr)
+				if grpoutput.addr != nil {
+					script, err = PayToAddrScript(grpoutput.addr)
 					if err != nil {
 						return nil, err
 					}
 				}
 
-				if output.script != "" {
-					script, err = hex.DecodeString(output.script)
+				if grpoutput.script != "" {
+					script, err = hex.DecodeString(grpoutput.script)
 					if err != nil {
 						return nil, err
 					}
 				}
-				txout := NewTxOut(output.value, script)
+				txout := NewTxOut(grpoutput.value, script)
 				txouts = append(txouts, txout)
-				totalOut += int64(output.value)
+				totalOut += int64(grpoutput.value)
 			}
+		}
+	}
+
+	// Check.
+	{
+		if len(txins) == 0 {
+			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FROM_EMPTY)
+		}
+
+		if len(txouts) == 0 {
+			return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SENDTO_EMPTY)
 		}
 	}
 
@@ -313,7 +318,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			if input.keys == nil {
 				return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, i)
 			}
-			if err := transaction.SignIndex(i, input.compressed, input.keys...); err != nil {
+			if err := transaction.SignIndex(i, input.compressed, input.sigHashType, input.keys...); err != nil {
 				return nil, err
 			}
 		}

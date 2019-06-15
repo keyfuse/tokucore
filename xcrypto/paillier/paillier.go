@@ -20,9 +20,9 @@ var (
 
 // PubKey -- used to perform encryption and homomorphic operations.
 type PubKey struct {
-	g  *big.Int
-	N  *big.Int
-	NN *big.Int
+	G  *big.Int `json:"G"`
+	N  *big.Int `json:"N"`
+	NN *big.Int `json:"NN"`
 }
 
 // PrvKey -- used to perform decryption.
@@ -51,7 +51,7 @@ func GenerateKeyPair(bitlen int) (*PubKey, *PrvKey, error) {
 	mu := new(big.Int).ModInverse(lambda, n)
 
 	pk := &PubKey{
-		g:  g,
+		G:  g,
 		N:  n,
 		NN: nn,
 	}
@@ -77,7 +77,7 @@ func (pk *PubKey) Encrypt(msg *big.Int) (*big.Int, error) {
 	}
 	// c=g^m*r^n (mod n^2)
 	r.Exp(r, pk.N, pk.NN)
-	m.Exp(pk.g, m, pk.NN)
+	m.Exp(pk.G, m, pk.NN)
 
 	c := new(big.Int).Mul(m, r)
 	return c.Mod(c, pk.NN), nil

@@ -88,7 +88,7 @@ func (party *EcdsaParty) Phase2(hash []byte) (*big.Int, *paillier.PubKey, *secp2
 	party.kinv = kinv
 
 	rx, ry := curve.ScalarBaseMult(k.Bytes())
-	return encpk, encpub, secp256k1.NewScalar(curve, rx, ry)
+	return encpk, encpub, secp256k1.NewScalar(rx, ry)
 }
 
 // Phase3 -- set party2's r2 to this party.
@@ -98,7 +98,7 @@ func (party *EcdsaParty) Phase3(r2 *secp256k1.Scalar) *secp256k1.Scalar {
 	curve := party.curve
 	rx, ry := curve.ScalarMult(r2.X, r2.Y, k.Bytes())
 
-	return secp256k1.NewScalar(curve, rx, ry)
+	return secp256k1.NewScalar(rx, ry)
 }
 
 // Phase4 -- generate the homomorphic encryption signature of this party.

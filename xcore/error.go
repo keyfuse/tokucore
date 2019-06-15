@@ -22,6 +22,7 @@ const (
 	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED        int = 4106
 	ER_TRANSACTION_SIGN_OUT_INDEX                  int = 5000
 	ER_TRANSACTION_SIGN_REDEEM_EMPTY               int = 5001
+	ER_TRANSACTION_VERIFY_FAILED                   int = 5002
 	ER_TRANSACTION_BUILDER_AMOUNT_NOT_ENOUGH_ERROR int = 5101
 	ER_TRANSACTION_BUILDER_FROM_EMPTY              int = 5102
 	ER_TRANSACTION_BUILDER_CHANGETO_EMPTY          int = 5103
@@ -47,10 +48,11 @@ var Errors = map[int]*xerror.Error{
 	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED:        {Num: ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED, State: "TS000", Message: "script.standard.pubkeys[%v].less.than.nrequired[%v]"},
 	ER_TRANSACTION_SIGN_OUT_INDEX:                  {Num: ER_TRANSACTION_SIGN_OUT_INDEX, State: "TTX00", Message: "transaction.sign.idx[%v].out.index[%v]"},
 	ER_TRANSACTION_SIGN_REDEEM_EMPTY:               {Num: ER_TRANSACTION_SIGN_REDEEM_EMPTY, State: "TTX00", Message: "transaction.sign.idx[%v].redeem.can.not.be.nil.since.keys[%v]>1"},
+	ER_TRANSACTION_VERIFY_FAILED:                   {Num: ER_TRANSACTION_VERIFY_FAILED, State: "TTX00", Message: "transaction.verify.for.input[%v].referencing[%v].at[%v].failed"},
 	ER_TRANSACTION_BUILDER_AMOUNT_NOT_ENOUGH_ERROR: {Num: ER_TRANSACTION_BUILDER_AMOUNT_NOT_ENOUGH_ERROR, State: "TTB00", Message: "transaction.builder.amount.totalout[%v].more.than.totalin[%v]"},
-	ER_TRANSACTION_BUILDER_FROM_EMPTY:              {Num: ER_TRANSACTION_BUILDER_FROM_EMPTY, State: "TTB00", Message: "transaction.builder.from.is.empty.at.group.idx[%v]"},
+	ER_TRANSACTION_BUILDER_FROM_EMPTY:              {Num: ER_TRANSACTION_BUILDER_FROM_EMPTY, State: "TTB00", Message: "transaction.builder.from.is.empty"},
 	ER_TRANSACTION_BUILDER_CHANGETO_EMPTY:          {Num: ER_TRANSACTION_BUILDER_CHANGETO_EMPTY, State: "TTB00", Message: "transaction.builder.changeto.is.empty"},
-	ER_TRANSACTION_BUILDER_SENDTO_EMPTY:            {Num: ER_TRANSACTION_BUILDER_SENDTO_EMPTY, State: "TTB00", Message: "transaction.builder.sendto.is.empty.at.group.idx[%v]"},
+	ER_TRANSACTION_BUILDER_SENDTO_EMPTY:            {Num: ER_TRANSACTION_BUILDER_SENDTO_EMPTY, State: "TTB00", Message: "transaction.builder.sendto.is.empty"},
 	ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY:          {Num: ER_TRANSACTION_BUILDER_SIGN_KEY_EMPTY, State: "TTB00", Message: "transaction.builder.sign.but.key.is.empty.at.input.idx[%v]"},
 	ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH:      {Num: ER_TRANSACTION_BUILDER_MIN_FEE_NOT_ENOUGH, State: "TTB00", Message: "transaction.builder.min.fee[%v].not.enough.from.change.value[%v]"},
 	ER_TRANSACTION_BUILDER_FEE_TOO_HIGH:            {Num: ER_TRANSACTION_BUILDER_FEE_TOO_HIGH, State: "TTB00", Message: "transaction.builder.fee[%v].too.high.than.max.fee[%v]"},

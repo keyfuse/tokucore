@@ -59,7 +59,6 @@ func TestTransactionRaw(t *testing.T) {
 	})
 
 	tx.SetLockTime(7)
-	tx.SetSigHashType(SigHashAll)
 }
 
 func TestTransactions(t *testing.T) {

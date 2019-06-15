@@ -64,9 +64,8 @@ func (party *SchnorrParty) Phase2(hash []byte) *secp256k1.Scalar {
 	party.k0 = k0
 
 	rx, ry := curve.ScalarBaseMult(k0.Bytes())
-	r := secp256k1.NewScalar(curve, rx, ry)
-	party.r = r
-	return r
+	party.r = secp256k1.NewScalar(rx, ry)
+	return party.r
 }
 
 // Phase3 -- return shared scalar R.
@@ -74,8 +73,8 @@ func (party *SchnorrParty) Phase3(r2 *secp256k1.Scalar) *secp256k1.Scalar {
 	curve := party.curve
 	scalarR := party.r
 
-	shareScalarR := secp256k1.NewScalar(curve, scalarR.X, scalarR.Y)
-	return shareScalarR.Add(r2)
+	shareScalarR := secp256k1.NewScalar(scalarR.X, scalarR.Y)
+	return shareScalarR.Add(curve, r2)
 }
 
 // Phase4 -- return the signature of this party.

@@ -92,7 +92,7 @@ func (bob *EcdsaBob) ScriptlessPhase2(hash []byte) (*big.Int, *paillier.PubKey, 
 	encpk, encpub, scalar := bob.Phase2(hash)
 
 	tx, ty := curve.ScalarMult(scalar.X, scalar.Y, secret.Bytes())
-	return encpk, encpub, secp256k1.NewScalar(curve, tx, ty)
+	return encpk, encpub, secp256k1.NewScalar(tx, ty)
 }
 
 // ScriptlessPhase3 -- return the shared R.
@@ -101,7 +101,7 @@ func (bob *EcdsaBob) ScriptlessPhase3(r2 *secp256k1.Scalar) *secp256k1.Scalar {
 	secret := bob.secret
 	scalar := bob.Phase3(r2)
 	tx, ty := curve.ScalarMult(scalar.X, scalar.Y, secret.Bytes())
-	return secp256k1.NewScalar(curve, tx, ty)
+	return secp256k1.NewScalar(tx, ty)
 }
 
 // ScriptlessPhase4 -- return the homomorphic ciphertext.

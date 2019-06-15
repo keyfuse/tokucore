@@ -74,6 +74,73 @@ func TestTransactionBuilderP2PKH(t *testing.T) {
 	t.Logf("signed.tx:%x", signedTx)
 }
 
+func TestTransactionBuilderP2PKHMultiUTXO(t *testing.T) {
+	seed1 := []byte("this.is.bohu.seed.")
+	bohuHDKey1 := bip32.NewHDKey(seed1)
+	bohuPrv1 := bohuHDKey1.PrivateKey()
+	bohuPub1 := bohuHDKey1.PublicKey()
+	bohu1 := NewPayToPubKeyHashAddress(bohuPub1.Hash160())
+	t.Logf("bohu1.addr:%v", bohu1.ToString(network.TestNet))
+
+	seed2 := []byte("this.is.bohu.seed.2.")
+	bohuHDKey2 := bip32.NewHDKey(seed2)
+	bohuPrv2 := bohuHDKey2.PrivateKey()
+	bohuPub2 := bohuHDKey2.PublicKey()
+	bohu2 := NewPayToPubKeyHashAddress(bohuPub2.Hash160())
+	t.Logf("bohu2.addr:%v", bohu2.ToString(network.TestNet))
+
+	// Satoshi.
+	seed := []byte("this.is.satoshi.seed.")
+	satoshiHDKey := bip32.NewHDKey(seed)
+	satoshiPub := satoshiHDKey.PublicKey()
+	satoshi := NewPayToPubKeyHashAddress(satoshiPub.Hash160())
+
+	// Prepare the UTXOs.
+	bohuCoin1 := NewCoinBuilder().AddOutput(
+		"c37c3154ae611cfd9a57e684f0c12d51491d09060c643adc292565884e947b2b",
+		1,
+		126626962,
+		"76a9145a927ddadc0ef3ae4501d0d9872b57c9584b9d8888ac",
+	).ToCoins()[0]
+
+	bohuCoin2 := NewCoinBuilder().AddOutput(
+		"77fb310add70fdbb37537ae91b07b7ca9e947d2acb48ceb1d4c01b4a5383d4fb",
+		0,
+		1000000,
+		"76a9149a4308b3d5bd509bade50ff4e5fc69833142a85a88ac",
+	).ToCoins()[0]
+
+	tx, err := NewTransactionBuilder().
+		AddCoin(bohuCoin2).
+		AddKeys(bohuPrv2).
+		SetSigHashType(SigHashAll).
+		Then().
+		AddCoin(bohuCoin1).
+		AddKeys(bohuPrv1).
+		SetSigHashType(SigHashAll).
+		Then().
+		To(satoshi, 4000).
+		Then().
+		SetChange(bohu1).
+		SendFees(1000).
+		Then().
+		Sign().
+		BuildTransaction()
+	assert.Nil(t, err)
+
+	// Verify.
+	err = tx.Verify()
+	assert.Nil(t, err)
+
+	assert.Equal(t, "4713098984b6d982290f577660577b83df3614aefc68c3fc68b4a5d3b500a480", tx.ID())
+
+	t.Logf("%v", tx.ToString())
+	t.Logf("txid:%v", tx.ID())
+
+	signedTx := tx.Serialize()
+	t.Logf("signed.tx:%x", signedTx)
+}
+
 func TestTransactionBuilderMultisigP2SH(t *testing.T) {
 	seed := []byte("this.is.bohu.seed.")
 	bohuHDKey := bip32.NewHDKey(seed)
@@ -615,7 +682,7 @@ func TestTransactionBuilderTSSP2PKH(t *testing.T) {
 		sharesig := fs1
 
 		// EmbedIdxSignature.
-		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig)
+		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, SigHashAll)
 		t.Logf("tx:%v", tx.ToString())
 
 		// Verify.
@@ -736,7 +803,7 @@ func TestTransactionBuilderTSSP2WPKH(t *testing.T) {
 		sharesig := fs1
 
 		// EmbedIdxSignature.
-		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig)
+		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, SigHashAll)
 		t.Logf("tx:%v", tx.ToString())
 
 		// Verify.
@@ -784,7 +851,7 @@ func TestTransactionBuilderError(t *testing.T) {
 					BuildTransaction()
 				return err
 			},
-			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FROM_EMPTY, 0),
+			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_FROM_EMPTY),
 		},
 		{
 			name: "builder.sendto.nil",
@@ -800,7 +867,7 @@ func TestTransactionBuilderError(t *testing.T) {
 					BuildTransaction()
 				return err
 			},
-			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SENDTO_EMPTY, 0),
+			err: xerror.NewError(Errors, ER_TRANSACTION_BUILDER_SENDTO_EMPTY),
 		},
 		{
 			name: "builder.change.nil",

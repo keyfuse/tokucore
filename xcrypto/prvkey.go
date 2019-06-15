@@ -44,7 +44,7 @@ func (p *PrvKey) PubKey() *PubKey {
 // Add -- add n2 to PrvKey.
 // k3 = (k1 + k2) mod N
 func (p *PrvKey) Add(n2 []byte) *PrvKey {
-	kint1 := p.D
+	kint1 := new(big.Int).Set(p.D)
 	kint2 := new(big.Int).SetBytes(n2)
 	kint1.Add(kint1, kint2)
 	kint1.Mod(kint1, p.Curve.Params().N)

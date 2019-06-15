@@ -28,7 +28,7 @@ func (pk *PubKey) AddPlaintext(ct *big.Int, msg *big.Int) (*big.Int, error) {
 		return nil, fmt.Errorf("input.invalid")
 	}
 	m := new(big.Int).Set(msg)
-	ct2 := new(big.Int).Exp(pk.g, m, pk.NN)
+	ct2 := new(big.Int).Exp(pk.G, m, pk.NN)
 	// ct * g^msg mod N^2
 	return new(big.Int).Mod(new(big.Int).Mul(ct, ct2), pk.NN), nil
 }

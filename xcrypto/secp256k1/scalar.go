@@ -13,23 +13,20 @@ import (
 
 // Scalar -- point.
 type Scalar struct {
-	X     *big.Int
-	Y     *big.Int
-	curve elliptic.Curve
+	X *big.Int `json:"X"`
+	Y *big.Int `json:"Y"`
 }
 
 // NewScalar -- creates new Scalar.
-func NewScalar(curve elliptic.Curve, x *big.Int, y *big.Int) *Scalar {
+func NewScalar(x *big.Int, y *big.Int) *Scalar {
 	return &Scalar{
-		X:     x,
-		Y:     y,
-		curve: curve,
+		X: x,
+		Y: y,
 	}
 }
 
 // Add -- add s2 to the s return new Scalar.
-func (s *Scalar) Add(s2 *Scalar) *Scalar {
-	curve := s.curve
+func (s *Scalar) Add(curve elliptic.Curve, s2 *Scalar) *Scalar {
 	x3, y3 := curve.Add(s.X, s.Y, s2.X, s2.Y)
-	return NewScalar(curve, x3, y3)
+	return NewScalar(x3, y3)
 }
