@@ -98,6 +98,33 @@ func EstimateSize(txins []*TxIn, txouts []*TxOut) int64 {
 	return int64((baseSize*(witnessScaleFactor-1) + (baseSize + witnessSize)) / witnessScaleFactor)
 }
 
+// EstimateNormalSize -- estimate the normal size by input and output count.
+func EstimateNormalSize(ins int, outs int) int64 {
+	baseSize := 0
+
+	// Core size.
+	{
+		// Version.
+		baseSize += 4
+		// Input size.
+		{
+			baseSize += xbase.VarIntSerializeSize(uint64(ins))
+			baseSize += inputP2PKHSize * ins
+		}
+
+		// Output size.
+		{
+			baseSize += xbase.VarIntSerializeSize(uint64(outs))
+			// 8 value size.
+			// 25 is the p2pkh script length.
+			baseSize += (8 + 25) * outs
+		}
+		// Locktime.
+		baseSize += 4
+	}
+	return int64(baseSize)
+}
+
 // EstimateFees -- estimate the fee.
 func EstimateFees(estimateSize int64, relayFeePerKb int64) int64 {
 	fees := 0.0
