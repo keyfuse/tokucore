@@ -55,27 +55,27 @@ type TxIn struct {
 	Witness            [][]byte // Witness script.
 	WitnessScriptCode  []byte   // Witness  script for sighash.
 	RawLockingScript   []byte   // Previous tx output script(locking script).
-	FinalLockingScript []byte   // Previous tx output script(locking script).
-	RawUnlockingScript []byte   // Previous tx output script(locking script).
+	FinalLockingScript []byte   // The scriptPubKey for verify.
+	RawUnlockingScript []byte   // scriptSig.
 }
 
 // NewTxIn -- build a TxIn.
-func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript []byte) *TxIn {
+func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript []byte) (*TxIn, error) {
 	scriptInstance, err := ParseLockingScript(script)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	witnessScriptCode, err := scriptInstance.GetWitnessScriptCode(redeemScript)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	rawLocking, err := scriptInstance.GetRawLockingScriptBytes()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	finalLocking, err := scriptInstance.GetFinalLockingScriptBytes(redeemScript)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	return &TxIn{
@@ -87,7 +87,7 @@ func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript 
 		WitnessScriptCode:  witnessScriptCode,
 		RawLockingScript:   rawLocking,
 		FinalLockingScript: finalLocking,
-	}
+	}, nil
 }
 
 // HasWitness -- check the TxIn is a witness program.

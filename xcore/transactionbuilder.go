@@ -190,7 +190,10 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 				if err != nil {
 					return nil, err
 				}
-				txin := NewTxIn(txid, grpinput.n, grpinput.value, script, group.redeemScript)
+				txin, err := NewTxIn(txid, grpinput.n, grpinput.value, script, group.redeemScript)
+				if err != nil {
+					return nil, err
+				}
 				txins = append(txins, txin)
 				totalIn += int64(grpinput.value)
 
