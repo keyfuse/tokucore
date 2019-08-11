@@ -126,5 +126,7 @@ func (party *SchnorrParty) Phase5(shareR *secp256k1.Scalar, sigs ...[]byte) ([]b
 // Close -- close the party.
 func (party *SchnorrParty) Close() {
 	party.prv = nil
-	party.k0.SetInt64(0)
+	if party.k0 != nil {
+		party.k0.SetInt64(0)
+	}
 }

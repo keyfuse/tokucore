@@ -167,6 +167,8 @@ func (party *EcdsaParty) Phase5(shareR *secp256k1.Scalar, sign2 *big.Int) ([]byt
 func (party *EcdsaParty) Close() {
 	party.prv = nil
 	party.encprv = nil
-	party.k.SetInt64(0)
-	party.kinv.SetInt64(0)
+	if party.k != nil {
+		party.k.SetInt64(0)
+		party.kinv.SetInt64(0)
+	}
 }

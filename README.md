@@ -59,10 +59,27 @@ $ make test
 - [HDWallet](examples/hdwallet.go)
 - [Mnemonic](examples/bip39.go)
 
-## Applications
+## Performance
+The performance was done on an Intel i5 (2.50GHz) with golang benchmark.
 
-- [ShaFish](https://shafish.com) - A web-based, trusted Bitcoin blockchain timestamping platform.
-- [JustDoBlockchain](https://justdoblockchain.com) - A website Learning Blockchain Demo by Demo.
+|    Implementation   |                       |  
+|---------------------|-----------------------|
+| 2P-ECDSA KeyGen     |      2.13 ms          |    
+| 2P-ECDSA Signing    |      426.05 ms        |  
+| 2P-Schnorr KeyGen   |      0.01 ms          |    
+| 2P-Schnorr Signing  |      4.31 ms          |  
+
+```
+$ go test -bench=BenchmarkMpc*  ./xcrypto
+
+goos: linux
+goarch: amd64
+pkg: github.com/tokublock/tokucore/xcrypto
+BenchmarkMpcEcdsaKeyGen-4      	    1000	   2133566 ns/op
+BenchmarkMpcEcdsaSigning-4     	       3	 426058258 ns/op
+BenchmarkMpcSchnorrKeyGen-4    	  100000	     11310 ns/op
+BenchmarkMpcSchnorrSigning-4   	     300	   4315631 ns/op
+```
 
 ## Can I trust this code?
 > Don't trust. Verify.

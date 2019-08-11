@@ -66,3 +66,54 @@ func TestMpcEcdsa(t *testing.T) {
 		fs1,
 		err == nil)
 }
+
+func BenchmarkMpcEcdsaKeyGen(b *testing.B) {
+	// Party 1.
+	p1, _ := new(big.Int).SetString("15bafcb56279dbfd985d4d17cdaf9bbfc6701b628f9fb00d6d1e0d2cb503ede3", 16)
+	prv1 := PrvKeyFromBytes(p1.Bytes())
+	pub1 := prv1.PubKey()
+	party1 := NewEcdsaParty(prv1)
+	defer party1.Close()
+
+	// Party 2.
+	p2, _ := new(big.Int).SetString("76818c328b8aa1e8f17bd599016fef8134b7d5ec315e0b6373953da7e8b5c0c9", 16)
+	prv2 := PrvKeyFromBytes(p2.Bytes())
+	party2 := NewEcdsaParty(prv2)
+	defer party2.Close()
+
+	for i := 0; i < b.N; i++ {
+		party2.Phase1(pub1)
+	}
+}
+
+func BenchmarkMpcEcdsaSigning(b *testing.B) {
+	hash := DoubleSha256([]byte{0x01, 0x02, 0x03, 0x04})
+
+	// Party 1.
+	p1, _ := new(big.Int).SetString("15bafcb56279dbfd985d4d17cdaf9bbfc6701b628f9fb00d6d1e0d2cb503ede3", 16)
+	prv1 := PrvKeyFromBytes(p1.Bytes())
+	party1 := NewEcdsaParty(prv1)
+	defer party1.Close()
+
+	// Party 2.
+	p2, _ := new(big.Int).SetString("76818c328b8aa1e8f17bd599016fef8134b7d5ec315e0b6373953da7e8b5c0c9", 16)
+	prv2 := PrvKeyFromBytes(p2.Bytes())
+	party2 := NewEcdsaParty(prv2)
+	defer party2.Close()
+
+	for i := 0; i < b.N; i++ {
+		// Phase 2.
+		encpk1, encpub1, scalarR1 := party1.Phase2(hash)
+		_, _, scalarR2 := party2.Phase2(hash)
+
+		// Phase 3.
+		shareR1 := party1.Phase3(scalarR2)
+		shareR2 := party2.Phase3(scalarR1)
+
+		// Phase 4.
+		sig2, _ := party2.Phase4(encpk1, encpub1, shareR2)
+
+		// Phase 5.
+		party1.Phase5(shareR1, sig2)
+	}
+}
