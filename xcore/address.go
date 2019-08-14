@@ -22,7 +22,11 @@ type Address interface {
 	// ToString returns the string of the address with base58 encoding.
 	ToString(net *network.Network) string
 
+	// Hash160 -- hash160 of this address.
 	Hash160() []byte
+
+	// LockingScript -- the locking script of this address.
+	LockingScript() ([]byte, error)
 }
 
 // DecodeAddress -- decode the string address and returns the Address with a known address type.
@@ -32,18 +36,20 @@ func DecodeAddress(addr string, net *network.Network) (Address, error) {
 	if oneIndex == 2 {
 		prefix := addr[:oneIndex]
 		if prefix == net.Bech32HRPSegwit {
-			_, version, witnessProgram, err := WitnessAddressDecode(addr)
+			_, version, witnessProgram, err := xbase.WitnessDecode(addr)
 			if err != nil {
 				return nil, err
 			}
-			if version != 0 {
+			switch version {
+			case 0x00:
+				switch len(witnessProgram) {
+				case 20:
+					return NewPayToWitnessV0PubKeyHashAddress(witnessProgram), nil
+				case 32:
+					return NewPayToWitnessV0ScriptHashAddress(witnessProgram), nil
+				}
+			default:
 				return nil, xerror.NewError(Errors, ER_ADDRESS_WITNESS_VERSION_UNSUPPORTED, version)
-			}
-			switch len(witnessProgram) {
-			case 20:
-				return NewPayToWitnessPubKeyHashAddress(witnessProgram), nil
-			case 32:
-				return NewPayToWitnessScriptHashAddress(witnessProgram), nil
 			}
 		}
 	}

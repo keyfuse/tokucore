@@ -48,7 +48,11 @@ func opCheckSig(vm *Engine) error {
 
 	hashType := sig[len(sig)-1]
 	sigDER := sig[:len(sig)-1]
-	hash := vm.sigHasher(hashType)
+	hash, err := vm.sigHasher(hashType)
+	if err != nil {
+		return err
+	}
+
 	if err := vm.sigVerifier(hash, sigDER, pubkey); err != nil {
 		vm.dstack.PushBool(false)
 		return nil
@@ -121,7 +125,11 @@ func opCheckMultiSig(vm *Engine) error {
 		hashType := sig[len(sig)-1]
 		sigDER := sig[:len(sig)-1]
 
-		hash := vm.sigHasher(hashType)
+		hash, err := vm.sigHasher(hashType)
+		if err != nil {
+			return err
+		}
+
 		if err := vm.sigVerifier(hash, sigDER, pubKeys[pubKeyIdx]); err == nil {
 			sigIdx++
 		}

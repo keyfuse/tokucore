@@ -13,22 +13,22 @@ import (
 	"github.com/tokublock/tokucore/xvm"
 )
 
-// PayToWitnessScriptHashScript -- P2WSH (version 0 pay-to-witness-script-hash).
-type PayToWitnessScriptHashScript struct {
+// PayToWitnessV0ScriptHashScript -- P2WSH (version 0 pay-to-witness-script-hash).
+type PayToWitnessV0ScriptHashScript struct {
 	hash []byte
 }
 
-// NewPayToWitnessScriptHashScript -- creates new P2WSH script.
+// NewPayToWitnessV0ScriptHashScript -- creates new P2WSH script.
 // scriptHash = sha256(script).
-func NewPayToWitnessScriptHashScript(scriptHash []byte) Script {
-	return &PayToWitnessScriptHashScript{
+func NewPayToWitnessV0ScriptHashScript(scriptHash []byte) Script {
+	return &PayToWitnessV0ScriptHashScript{
 		hash: scriptHash,
 	}
 }
 
 // GetAddress -- returns the Address interface.
-func (s *PayToWitnessScriptHashScript) GetAddress() Address {
-	return NewPayToWitnessScriptHashAddress(s.hash)
+func (s *PayToWitnessV0ScriptHashScript) GetAddress() Address {
+	return NewPayToWitnessV0ScriptHashAddress(s.hash)
 }
 
 // GetRawLockingScriptBytes -- used to get locking script bytes.
@@ -38,7 +38,7 @@ func (s *PayToWitnessScriptHashScript) GetAddress() Address {
 // - OP_0
 // - OP_DATA_32
 // - 32 bytes sha256<script-hash>
-func (s *PayToWitnessScriptHashScript) GetRawLockingScriptBytes() ([]byte, error) {
+func (s *PayToWitnessV0ScriptHashScript) GetRawLockingScriptBytes() ([]byte, error) {
 	return xvm.NewScriptBuilder().
 		AddOp(xvm.OP_0).
 		AddData(s.hash).
@@ -46,17 +46,17 @@ func (s *PayToWitnessScriptHashScript) GetRawLockingScriptBytes() ([]byte, error
 }
 
 // GetFinalLockingScriptBytes -- used to get the re-written locking for witness.
-func (s *PayToWitnessScriptHashScript) GetFinalLockingScriptBytes(redeem []byte) ([]byte, error) {
+func (s *PayToWitnessV0ScriptHashScript) GetFinalLockingScriptBytes(redeem []byte) ([]byte, error) {
 	scriptInstance := NewPayToScriptHashScript(xcrypto.Hash160(redeem))
 	return scriptInstance.GetFinalLockingScriptBytes(redeem)
 }
 
 // GetRawUnlockingScriptBytes -- used to get raw unlocking script bytes.
 // unlocking: (empty)
-func (s *PayToWitnessScriptHashScript) GetRawUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([]byte, error) {
+func (s *PayToWitnessV0ScriptHashScript) GetRawUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([]byte, error) {
 	// Check sha256(redeem) == s.Hash
 	if !bytes.Equal(xcrypto.Sha256(redeem), s.hash) {
-		return nil, fmt.Errorf("PayToWitnessScriptHashScript.GetUnlockingScriptBytes.error:sha256(redeem)!=s.hash")
+		return nil, fmt.Errorf("PayToWitnessV0ScriptHashScript.GetUnlockingScriptBytes.error:sha256(redeem)!=s.hash")
 	}
 
 	scriptInstance := NewPayToScriptHashScript(xcrypto.Hash160(redeem))
@@ -64,10 +64,10 @@ func (s *PayToWitnessScriptHashScript) GetRawUnlockingScriptBytes(signs []PubKey
 }
 
 // GetWitnessUnlockingScriptBytes -- used to get witness script bytes.
-func (s *PayToWitnessScriptHashScript) GetWitnessUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([][]byte, error) {
+func (s *PayToWitnessV0ScriptHashScript) GetWitnessUnlockingScriptBytes(signs []PubKeySign, redeem []byte) ([][]byte, error) {
 	// Check sha256(redeem) == s.Hash
 	if !bytes.Equal(xcrypto.Sha256(redeem), s.hash) {
-		return nil, fmt.Errorf("PayToWitnessScriptHashScript.GetUnlockingScriptBytes.error:sha256(redeem)!=s.hash")
+		return nil, fmt.Errorf("PayToWitnessV0ScriptHashScript.GetUnlockingScriptBytes.error:sha256(redeem)!=s.hash")
 	}
 
 	var witness [][]byte
@@ -87,13 +87,18 @@ func (s *PayToWitnessScriptHashScript) GetWitnessUnlockingScriptBytes(signs []Pu
 // OP_0 OP_DATA_20 <20-bytes-script-hash>
 // to
 // OP_HASH160 <Hash160(redeemScript)> OP_EQUAL
-func (s *PayToWitnessScriptHashScript) GetWitnessScriptCode(redeem []byte) ([]byte, error) {
+func (s *PayToWitnessV0ScriptHashScript) GetWitnessScriptCode(redeem []byte) ([]byte, error) {
 	return redeem, nil
+}
+
+// GetScriptVersion -- used to get the version of this script.
+func (s *PayToWitnessV0ScriptHashScript) GetScriptVersion() ScriptVersion {
+	return WITNESS_V0
 }
 
 // WitnessToUnlockingScriptBytes -- converts witness slice to unlocking script.
 // For txn deserialize from hex.
-func (s *PayToWitnessScriptHashScript) WitnessToUnlockingScriptBytes(witness [][]byte) ([]byte, error) {
+func (s *PayToWitnessV0ScriptHashScript) WitnessToUnlockingScriptBytes(witness [][]byte) ([]byte, error) {
 	l := len(witness)
 	if l > 1 {
 		redeem := witness[len(witness)-1]
@@ -109,9 +114,9 @@ func (s *PayToWitnessScriptHashScript) WitnessToUnlockingScriptBytes(witness [][
 	return nil, nil
 }
 
-// isWitnessScriptHash --
+// isWitnessV0ScriptHash --
 // returns true if the passed script is a pay-to-witness-script-hash, and false otherwise.
-func isWitnessScriptHash(instrs []xvm.Instruction) bool {
+func isWitnessV0ScriptHash(instrs []xvm.Instruction) bool {
 	return len(instrs) == 2 &&
 		instrs[0].OpCode() == xvm.OP_0 &&
 		instrs[1].OpCode() == xvm.OP_DATA_32

@@ -42,6 +42,24 @@ testxcore:
 	go test -v -race ./xcore/bip39
 	go test -v -race ./xcore
 
+testexample:
+	go run examples/address_multisig.go
+	go run examples/address_p2pkh.go
+	go run examples/address_p2sh.go
+	go run examples/address_p2wpkh_v0.go
+	go run examples/address_p2wsh_v0.go
+	go run examples/address_rand.go
+	go run examples/bip39.go
+	go run examples/hdwallet.go
+	go run examples/scriptless_ecdsa.go
+	go run examples/transaction_multisig.go
+	go run examples/transaction_opreturn.go
+	go run examples/transaction_p2pkh.go
+	go run examples/transaction_p2wpkh_v0.go
+	go run examples/transaction_p2wsh_v0.go
+	go run examples/two_party_ecdsa_transaction_p2pkh.go
+	go run examples/two_party_ecdsa_transaction_p2wpkh.go
+
 
 pkgs =	./xbase\
 		./xcrypto/...\

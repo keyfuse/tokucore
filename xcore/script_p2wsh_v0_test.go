@@ -18,7 +18,7 @@ func TestScriptP2WSH(t *testing.T) {
 	outputScriptString := "OP_0 OP_DATA_32 b41568b8c8af2fd75f370574b629de457ecbb7bb377f9f1a602d8dfb42bc8962"
 
 	hex, _ := hex.DecodeString("b41568b8c8af2fd75f370574b629de457ecbb7bb377f9f1a602d8dfb42bc8962")
-	script := NewPayToWitnessScriptHashScript(hex)
+	script := NewPayToWitnessV0ScriptHashScript(hex)
 	locking, err := script.GetRawLockingScriptBytes()
 	assert.Nil(t, err)
 	assert.Equal(t, outputScriptBytes, locking)

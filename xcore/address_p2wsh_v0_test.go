@@ -21,7 +21,7 @@ func TestAddressP2WSH(t *testing.T) {
 		hexstr := "b41568b8c8af2fd75f370574b629de457ecbb7bb377f9f1a602d8dfb42bc8962"
 		addr := "bc1qks2k3wxg4uhawhehq46tv2w7g4lvhdamxale7xnq9kxlks4u393qmltg4f"
 		hex, _ := hex.DecodeString(hexstr)
-		address := NewPayToWitnessScriptHashAddress(hex)
+		address := NewPayToWitnessV0ScriptHashAddress(hex)
 		assert.Equal(t, addr, address.ToString(net))
 		address.Hash160()
 
@@ -34,7 +34,7 @@ func TestAddressP2WSH(t *testing.T) {
 	{
 		hexstr := "f6889b21b5540353a29ed18c45ea0031280c42"
 		hex, _ := hex.DecodeString(hexstr)
-		address := NewPayToWitnessScriptHashAddress(hex)
+		address := NewPayToWitnessV0ScriptHashAddress(hex)
 		assert.Nil(t, address)
 	}
 }
@@ -47,7 +47,7 @@ func TestAddressP2WSHExample1(t *testing.T) {
 	assert.Nil(t, err)
 	t.Logf("p2wsh.witness.script:%v", xvm.DisasmString(witnessScript))
 	witnessScriptHash := sha256.Sum256(witnessScript)
-	addr := NewPayToWitnessScriptHashAddress(witnessScriptHash[:])
+	addr := NewPayToWitnessV0ScriptHashAddress(witnessScriptHash[:])
 	t.Logf("p2wsh.address.testnte:%v", addr.ToString(network.TestNet))
 	t.Logf("p2wsh.address.mainnet:%v", addr.ToString(network.MainNet))
 }

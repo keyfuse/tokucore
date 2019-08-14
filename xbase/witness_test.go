@@ -3,7 +3,7 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcore
+package xbase
 
 import (
 	"testing"
@@ -67,11 +67,11 @@ func TestWitnessAddress(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		hrp, version, program, err := WitnessAddressDecode(test.address)
+		hrp, version, program, err := WitnessDecode(test.address)
 		assert.Nil(t, err)
 		assert.Equal(t, test.witnessProgram, witnessScriptPubkey(version, program))
 
-		addr, err := WitnessAddressEncode(hrp, version, program)
+		addr, err := WitnessEncode(hrp, version, program)
 		assert.Nil(t, err)
 		assert.Equal(t, test.address, addr)
 	}

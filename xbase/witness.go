@@ -3,17 +3,15 @@
 // Copyright (c) 2018 TokuBlock
 // BSD License
 
-package xcore
+package xbase
 
 import (
 	"fmt"
-
-	"github.com/tokublock/tokucore/xbase"
 )
 
-// WitnessAddressDecode -- decodes the segwit address to hrp, version and pubkeyscript.
-func WitnessAddressDecode(addr string) (string, byte, []byte, error) {
-	hrp, data, err := xbase.Bech32Decode(addr)
+// WitnessDecode -- decodes the segwit address to hrp, version and pubkeyscript.
+func WitnessDecode(addr string) (string, byte, []byte, error) {
+	hrp, data, err := Bech32Decode(addr)
 	if err != nil {
 		return "", 0, nil, err
 	}
@@ -24,13 +22,13 @@ func WitnessAddressDecode(addr string) (string, byte, []byte, error) {
 	return hrp, data[0], res, nil
 }
 
-// WitnessAddressEncode -- encodes to segwit address.
-func WitnessAddressEncode(hrp string, version byte, program []byte) (string, error) {
+// WitnessEncode -- encodes to segwit address.
+func WitnessEncode(hrp string, version byte, program []byte) (string, error) {
 	data, err := convertBits(program, 8, 5, true)
 	if err != nil {
 		return "", err
 	}
-	return xbase.Bech32Encode(hrp, append([]byte{version}, data...))
+	return Bech32Encode(hrp, append([]byte{version}, data...))
 }
 
 func convertBits(data []byte, frombits, tobits uint, pad bool) ([]byte, error) {

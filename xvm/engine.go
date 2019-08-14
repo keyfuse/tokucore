@@ -14,7 +14,7 @@ import (
 )
 
 // SigHashFn -- hash function for checksig.
-type SigHashFn func(hashType byte) []byte
+type SigHashFn func(hashType byte) ([]byte, error)
 
 // SigVerifyFn -- verify function for checksig.
 type SigVerifyFn func(pubkey []byte, hash []byte, signature []byte) error

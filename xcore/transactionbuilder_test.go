@@ -250,7 +250,7 @@ func TestTransactionBuilderP2WPKH(t *testing.T) {
 	satoshiHDKey := bip32.NewHDKey(seed)
 	satoshiPrv := satoshiHDKey.PrivateKey()
 	satoshiPubKey := satoshiHDKey.PublicKey()
-	satoshi := NewPayToWitnessPubKeyHashAddress(satoshiPubKey.Hash160())
+	satoshi := NewPayToWitnessV0PubKeyHashAddress(satoshiPubKey.Hash160())
 	t.Logf("satoshi.p2wpkh.addr:%v", satoshi.ToString(network.TestNet))
 
 	// Funding.
@@ -348,7 +348,7 @@ func TestTransactionBuilderP2WSH(t *testing.T) {
 	redeemScript := NewPayToMultiSigScript(2, aPub, bPub, cPub)
 	redeem, _ := redeemScript.GetLockingScriptBytes()
 	t.Logf("redeem.hex:%x", redeem)
-	multi := NewPayToWitnessScriptHashAddress(xcrypto.Sha256(redeem))
+	multi := NewPayToWitnessV0ScriptHashAddress(xcrypto.Sha256(redeem))
 	t.Logf("multi.addr:%v", multi.ToString(network.TestNet))
 	assert.Equal(t, "tb1qrrf2qzw8stxkwhurtamy7wkl3a24vhgu0l3gcf66a8hl5dk9napqtap6rf", multi.ToString(network.TestNet))
 
@@ -726,7 +726,7 @@ func TestTransactionBuilderTSSP2WPKH(t *testing.T) {
 	assert.Equal(t, sharepub1, sharepub2)
 
 	// Shared address.
-	shared := NewPayToWitnessPubKeyHashAddress(sharepub.Hash160())
+	shared := NewPayToWitnessV0PubKeyHashAddress(sharepub.Hash160())
 	t.Logf("shared.addr:%v", shared.ToString(network.TestNet))
 
 	// Funding.
@@ -776,7 +776,7 @@ func TestTransactionBuilderTSSP2WPKH(t *testing.T) {
 			BuildTransaction()
 		assert.Nil(t, err)
 
-		idx0sighash := tx.WitnessSignatureHash(0, SigHashAll)
+		idx0sighash := tx.WitnessV0SignatureHash(0, SigHashAll)
 		t.Logf("idx0.sighash:%x", idx0sighash)
 
 		// Phase 2.

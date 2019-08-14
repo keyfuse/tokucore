@@ -18,6 +18,6 @@ func main() {
 	hdprvkey := bip32.NewHDKey(seed)
 	pubkey := hdprvkey.PublicKey()
 
-	addr := xcore.NewPayToWitnessPubKeyHashAddress(pubkey.Hash160())
+	addr := xcore.NewPayToWitnessV0PubKeyHashAddress(pubkey.Hash160())
 	fmt.Printf("p2wpkh.address(mainet):\t%s\n", addr.ToString(network.MainNet))
 }

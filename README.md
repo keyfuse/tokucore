@@ -41,16 +41,16 @@ $ make test
 - [Generate a P2PKH Address](examples/address_p2pkh.go)
 - [Generate a P2SH Address](examples/address_p2sh.go)
 - [Generate a 2-of-3 P2SH MultiSig Address](examples/address_multisig.go)
-- [Generate a P2WPKH SegWit Address](examples/address_p2wpkh.go)
-- [Generate a P2WSH  SegWit Address](examples/address_p2wsh.go)
+- [Generate a P2WPKH SegWit Address](examples/address_p2wpkh_v0.go)
+- [Generate a P2WSH  SegWit Address](examples/address_p2wsh_v0.go)
 - [Create a P2PKH Transaction](examples/transaction_p2pkh.go)
 - [Create a 2-to-3 P2SH MultiSig Transaction](examples/transaction_multisig.go)
 - [Create a Transaction with an OP_RETURN Output](examples/transaction_opreturn.go)
 - [Create a Transaction with Verify](examples/transaction_p2pkh.go)
-- [Create a Transaction with P2WPKH Segwit Output](examples/transaction_p2wpkh.go)
-- [Create a Transaction with P2WPKH SegWit Input](examples/transaction_p2wpkh.go)
-- [Create a Transaction with P2WSH  SegWit Output](examples/transaction_p2wsh.go)
-- [Create a Transaction with P2WSH  SegWit Input](examples/transaction_p2wsh.go)
+- [Create a Transaction with P2WPKH Segwit Output](examples/transaction_p2wpkh_v0.go)
+- [Create a Transaction with P2WPKH SegWit Input](examples/transaction_p2wpkh_v0.go)
+- [Create a Transaction with P2WSH  SegWit Output](examples/transaction_p2wsh_v0.go)
+- [Create a Transaction with P2WSH  SegWit Input](examples/transaction_p2wsh_v0.go)
 - [Create a Two-Party-Threshold ECDSA Transaction with P2PKH Output](examples/two_party_ecdsa_transaction_p2pkh.go)
 - [Create a Two-Party-Threshold ECDSA Transaction with P2PKH Input](examples/two_party_ecdsa_transaction_p2pkh.go)
 - [Create a Two-Party-Threshold ECDSA Transaction with P2WPKH SegWit Output](examples/two_party_ecdsa_transaction_p2wpkh.go)
@@ -62,12 +62,12 @@ $ make test
 ## Performance
 The performance was done on an Intel i5 (2.50GHz) with golang benchmark.
 
-|    Implementation   |                       |  
+|    Implementation   |                       |
 |---------------------|-----------------------|
-| 2P-ECDSA KeyGen     |      2.13 ms          |    
-| 2P-ECDSA Signing    |      426.05 ms        |  
-| 2P-Schnorr KeyGen   |      0.01 ms          |    
-| 2P-Schnorr Signing  |      4.31 ms          |  
+| 2P-ECDSA KeyGen     |      2.13 ms          |
+| 2P-ECDSA Signing    |      426.05 ms        |
+| 2P-Schnorr KeyGen   |      0.01 ms          |
+| 2P-Schnorr Signing  |      4.31 ms          |
 
 ```
 $ go test -bench=BenchmarkMpc*  ./xcrypto

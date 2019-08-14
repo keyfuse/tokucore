@@ -49,7 +49,7 @@ func main() {
 	redeemScript := xcore.NewPayToMultiSigScript(2, aPub, bPub, cPub)
 	redeem, _ := redeemScript.GetLockingScriptBytes()
 	fmt.Printf("redeem.hex:%x\n", redeem)
-	multi := xcore.NewPayToWitnessScriptHashAddress(xcrypto.Sha256(redeem))
+	multi := xcore.NewPayToWitnessV0ScriptHashAddress(xcrypto.Sha256(redeem))
 	fmt.Printf("multi.addr:%v\n", multi.ToString(network.TestNet))
 
 	// Funding to P2WSH.

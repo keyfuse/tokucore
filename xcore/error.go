@@ -20,6 +20,7 @@ const (
 	ER_SCRIPT_TYPE_UNKNOWN                         int = 4100
 	ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED    int = 4105
 	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED        int = 4106
+	ER_SCRIPT_SIGNATURE_TYPE_UNKNOW                int = 4107
 	ER_TRANSACTION_SIGN_OUT_INDEX                  int = 5000
 	ER_TRANSACTION_SIGN_REDEEM_EMPTY               int = 5001
 	ER_TRANSACTION_VERIFY_FAILED                   int = 5002
@@ -46,6 +47,7 @@ var Errors = map[int]*xerror.Error{
 	ER_SCRIPT_TYPE_UNKNOWN:                         {Num: ER_SCRIPT_TYPE_UNKNOWN, State: "TS000", Message: "script.unknow.type[%v]"},
 	ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED:    {Num: ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED, State: "TS000", Message: "script.standard.unsupported.address.type[%v]"},
 	ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED:        {Num: ER_SCRIPT_STANDARD_PUBKEYS_LE_NREQUIRED, State: "TS000", Message: "script.standard.pubkeys[%v].less.than.nrequired[%v]"},
+	ER_SCRIPT_SIGNATURE_TYPE_UNKNOW:                {Num: ER_SCRIPT_SIGNATURE_TYPE_UNKNOW, State: "TS000", Message: "script.signature.type.unknow[%v]"},
 	ER_TRANSACTION_SIGN_OUT_INDEX:                  {Num: ER_TRANSACTION_SIGN_OUT_INDEX, State: "TTX00", Message: "transaction.sign.idx[%v].out.index[%v]"},
 	ER_TRANSACTION_SIGN_REDEEM_EMPTY:               {Num: ER_TRANSACTION_SIGN_REDEEM_EMPTY, State: "TTX00", Message: "transaction.sign.idx[%v].redeem.can.not.be.nil.since.keys[%v]>1"},
 	ER_TRANSACTION_VERIFY_FAILED:                   {Num: ER_TRANSACTION_VERIFY_FAILED, State: "TTX00", Message: "transaction.verify.for.input[%v].referencing[%v].at[%v].failed"},

@@ -69,8 +69,8 @@ func TestEngine(t *testing.T) {
 			engine.DisableDebug()
 		}
 		// Hash function.
-		hasherFn := func(hashType byte) []byte {
-			return xcrypto.DoubleSha256([]byte{0x01, 0x02, 0x03, 0x04})
+		hasherFn := func(hashType byte) ([]byte, error) {
+			return xcrypto.DoubleSha256([]byte{0x01, 0x02, 0x03, 0x04}), nil
 		}
 		engine.SetSigHashFn(hasherFn)
 

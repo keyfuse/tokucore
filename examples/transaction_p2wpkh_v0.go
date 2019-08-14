@@ -31,7 +31,7 @@ func main() {
 	satoshiHDKey := bip32.NewHDKey(seed)
 	satoshiPrv := satoshiHDKey.PrivateKey()
 	satoshiPubKey := satoshiHDKey.PublicKey()
-	satoshi := xcore.NewPayToWitnessPubKeyHashAddress(satoshiPubKey.Hash160())
+	satoshi := xcore.NewPayToWitnessV0PubKeyHashAddress(satoshiPubKey.Hash160())
 
 	// Funding to SegWit.
 	{

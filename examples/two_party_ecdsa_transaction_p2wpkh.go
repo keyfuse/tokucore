@@ -47,7 +47,7 @@ func main() {
 	sharepub := sharepub1
 
 	// Shared address.
-	shared := xcore.NewPayToWitnessPubKeyHashAddress(sharepub.Hash160())
+	shared := xcore.NewPayToWitnessV0PubKeyHashAddress(sharepub.Hash160())
 	fmt.Printf("shared.addr:%v\n", shared.ToString(network.TestNet))
 
 	// Funding.
@@ -98,7 +98,7 @@ func main() {
 		assertNil(err)
 
 		// Witness SigHash of index 0.
-		idx0sighash := tx.WitnessSignatureHash(0, xcore.SigHashAll)
+		idx0sighash := tx.WitnessV0SignatureHash(0, xcore.SigHashAll)
 
 		// Phase 2.
 		encpk1, encpub1, scalarR1 := aliceParty.Phase2(idx0sighash)

@@ -71,6 +71,11 @@ func (s *PayToPubKeyHashScript) GetWitnessScriptCode(redeem []byte) ([]byte, err
 	return nil, nil
 }
 
+// GetScriptVersion -- used to get the version of this script.
+func (s *PayToPubKeyHashScript) GetScriptVersion() ScriptVersion {
+	return BASE
+}
+
 // WitnessToUnlockingScriptBytes -- converts witness slice to unlocking script.
 // For txn deserialize from hex.
 func (s *PayToPubKeyHashScript) WitnessToUnlockingScriptBytes(witness [][]byte) ([]byte, error) {

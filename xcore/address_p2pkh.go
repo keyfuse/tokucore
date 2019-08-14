@@ -41,3 +41,8 @@ func (a *PayToPubKeyHashAddress) ToString(net *network.Network) string {
 func (a *PayToPubKeyHashAddress) Hash160() []byte {
 	return a.pubKeyHash[:]
 }
+
+// LockingScript -- the address locking script.
+func (a *PayToPubKeyHashAddress) LockingScript() ([]byte, error) {
+	return NewPayToPubKeyHashScript(a.Hash160()).GetRawLockingScriptBytes()
+}

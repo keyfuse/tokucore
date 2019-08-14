@@ -10,19 +10,15 @@ import (
 	"github.com/tokublock/tokucore/xvm"
 )
 
-// ScriptClass -- an enumeration for the list of standard types of script.
-type ScriptClass byte
+// ScriptVersion --
+type ScriptVersion int
 
-// Classes of script payment known about in the blockchain.
+// Script version.
 const (
-	NonStandardTy         ScriptClass = iota // None of the recognized forms.
-	PubKeyTy                                 // Pay pubkey.
-	PubKeyHashTy                             // Pay pubkey hash.
-	WitnessV0PubKeyHashTy                    // Pay witness pubkey hash.
-	ScriptHashTy                             // Pay to script hash.
-	WitnessV0ScriptHashTy                    // Pay to witness script hash.
-	MultiSigTy                               // Multi signature.
-	NullDataTy                               // Empty data-only (provably prunable).
+	BASE ScriptVersion = iota
+	WITNESS_V0
+	TAPROOT
+	TAPSCRIPT
 )
 
 // PubKeySign -- Public key and signature pair.
@@ -54,6 +50,9 @@ type Script interface {
 	// If txin is non-witness, returns nil.
 	GetWitnessScriptCode([]byte) ([]byte, error)
 
+	// GetScriptVersion -- used to get the version of the script.
+	GetScriptVersion() ScriptVersion
+
 	// WitnessToUnlockingScriptBytes -- converts witness slice to unlocking script.
 	// For txn deserialize from hex.
 	WitnessToUnlockingScriptBytes(witness [][]byte) ([]byte, error)
@@ -70,25 +69,10 @@ func ParseLockingScript(script []byte) (Script, error) {
 		return NewPayToPubKeyHashScript(instrs[2].Data()), nil
 	case isScriptHash(instrs):
 		return NewPayToScriptHashScript(instrs[1].Data()), nil
-	case isWitnessPubKeyHash(instrs):
-		return NewPayToWitnessPubKeyHashScript(instrs[1].Data()), nil
-	case isWitnessScriptHash(instrs):
-		return NewPayToWitnessScriptHashScript(instrs[1].Data()), nil
+	case isWitnessV0PubKeyHash(instrs):
+		return NewPayToWitnessV0PubKeyHashScript(instrs[1].Data()), nil
+	case isWitnessV0ScriptHash(instrs):
+		return NewPayToWitnessV0ScriptHashScript(instrs[1].Data()), nil
 	}
 	return nil, xerror.NewError(Errors, ER_SCRIPT_TYPE_UNKNOWN, xvm.DisasmString(script))
-}
-
-// PayToAddrScript -- returns the locking script by address type.
-func PayToAddrScript(addr Address) ([]byte, error) {
-	switch addr.(type) {
-	case *PayToPubKeyHashAddress:
-		return NewPayToPubKeyHashScript(addr.Hash160()).GetRawLockingScriptBytes()
-	case *PayToScriptHashAddress:
-		return NewPayToScriptHashScript(addr.Hash160()).GetRawLockingScriptBytes()
-	case *PayToWitnessPubKeyHashAddress:
-		return NewPayToWitnessPubKeyHashScript(addr.Hash160()).GetRawLockingScriptBytes()
-	case *PayToWitnessScriptHashAddress:
-		return NewPayToWitnessScriptHashScript(addr.Hash160()).GetRawLockingScriptBytes()
-	}
-	return nil, xerror.NewError(Errors, ER_SCRIPT_STANDARD_ADDRESS_TYPE_UNSUPPORTED, addr)
 }

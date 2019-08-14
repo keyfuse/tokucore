@@ -7,38 +7,39 @@ package xcore
 
 import (
 	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xbase"
 )
 
 // *******************************************
-// PayToWitnessScriptHashAddress(P2WSH)
+// PayToWitnessV0ScriptHashAddress(P2WSH)
 // *******************************************
 
-// PayToWitnessScriptHashAddress -- is an Address for a pay-to-witness-script-hash (P2WSH) output.
+// PayToWitnessV0ScriptHashAddress -- is an Address for a pay-to-witness-script-hash (P2WSH) output.
 // witness program = sha256(script).
 // Encode into bech32 by providing the witness program, bc as the human readable part and 0 as witness version.
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
-type PayToWitnessScriptHashAddress struct {
+type PayToWitnessV0ScriptHashAddress struct {
 	witnessVersion byte
 	witnessProgram [32]byte
 }
 
-// NewPayToWitnessScriptHashAddress -- create new PayToWitnessScriptHashAddress.
-func NewPayToWitnessScriptHashAddress(witnessProgram []byte) Address {
+// NewPayToWitnessV0ScriptHashAddress -- create new PayToWitnessV0ScriptHashAddress.
+func NewPayToWitnessV0ScriptHashAddress(witnessProgram []byte) Address {
 	if len(witnessProgram) != 32 {
 		return nil
 	}
 
 	var witness [32]byte
 	copy(witness[:], witnessProgram)
-	return &PayToWitnessScriptHashAddress{
+	return &PayToWitnessV0ScriptHashAddress{
 		witnessVersion: 0x00,
 		witnessProgram: witness,
 	}
 }
 
 // ToString -- the implementation method for xcore.Address interface.
-func (a *PayToWitnessScriptHashAddress) ToString(net *network.Network) string {
-	str, err := WitnessAddressEncode(net.Bech32HRPSegwit, a.witnessVersion, a.witnessProgram[:])
+func (a *PayToWitnessV0ScriptHashAddress) ToString(net *network.Network) string {
+	str, err := xbase.WitnessEncode(net.Bech32HRPSegwit, a.witnessVersion, a.witnessProgram[:])
 	if err != nil {
 		return ""
 	}
@@ -47,6 +48,11 @@ func (a *PayToWitnessScriptHashAddress) ToString(net *network.Network) string {
 
 // Hash160 -- the address hash160 bytes.
 // Here is sha256, not hash160.
-func (a *PayToWitnessScriptHashAddress) Hash160() []byte {
+func (a *PayToWitnessV0ScriptHashAddress) Hash160() []byte {
 	return a.witnessProgram[:]
+}
+
+// LockingScript -- the address locking script.
+func (a *PayToWitnessV0ScriptHashAddress) LockingScript() ([]byte, error) {
+	return NewPayToWitnessV0ScriptHashScript(a.Hash160()).GetRawLockingScriptBytes()
 }

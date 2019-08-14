@@ -18,7 +18,7 @@ func TestScriptP2WPKH(t *testing.T) {
 	outputScriptString := "OP_0 OP_DATA_20 14836dbe7f38c5ac3d49e8d790af808a4ee9edcf"
 
 	hex, _ := hex.DecodeString("14836dbe7f38c5ac3d49e8d790af808a4ee9edcf")
-	script := NewPayToWitnessPubKeyHashScript(hex)
+	script := NewPayToWitnessV0PubKeyHashScript(hex)
 	locking, err := script.GetRawLockingScriptBytes()
 	assert.Nil(t, err)
 	assert.Equal(t, outputScriptBytes, locking)
