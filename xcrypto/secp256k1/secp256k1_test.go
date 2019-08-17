@@ -1,6 +1,6 @@
 // Copyright (c) 2009 The Go Authors. All rights reserved.
 // Copyright (c) 2018 Stanislav Fomichev.
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package secp256k1

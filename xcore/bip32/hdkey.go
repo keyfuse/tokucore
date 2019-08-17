@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package bip32
@@ -16,9 +16,9 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xbase"
-	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xcrypto"
 )
 
 // Formulas:

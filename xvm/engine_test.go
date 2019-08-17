@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xvm
@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xcrypto"
 )
 
 func readTests(testfile string) ([][]interface{}, error) {

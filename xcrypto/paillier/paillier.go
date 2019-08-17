@@ -1,7 +1,7 @@
 // tokucore
 //
 // Copyright (c) 2019 Stefano Mozart
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package paillier

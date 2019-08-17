@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xprotocol
@@ -8,8 +8,8 @@ package xprotocol
 import (
 	"time"
 
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xbase"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xbase"
 )
 
 const (

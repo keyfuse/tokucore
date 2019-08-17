@@ -1,7 +1,7 @@
 // tokucore
 //
 // Copyright (c) 2014-2018 Tyler Smith
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package bip39
@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/xcore/bip39/words"
+	"github.com/keyfuse/tokucore/xcore/bip39/words"
 )
 
 type vector struct {

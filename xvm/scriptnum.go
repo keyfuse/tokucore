@@ -1,12 +1,12 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xvm
 
 import (
-	"github.com/tokublock/tokucore/xerror"
+	"github.com/keyfuse/tokucore/xerror"
 )
 
 const (

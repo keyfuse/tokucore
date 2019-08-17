@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tokublock/tokucore/xbase"
-	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xerror"
-	"github.com/tokublock/tokucore/xvm"
+	"github.com/keyfuse/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xerror"
+	"github.com/keyfuse/tokucore/xvm"
 )
 
 const (

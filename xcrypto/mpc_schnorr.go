@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcrypto
@@ -10,8 +10,8 @@ import (
 
 	"crypto/elliptic"
 
-	"github.com/tokublock/tokucore/xcrypto/schnorr"
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcrypto/schnorr"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 // SchnorrParty -- Schnorr party struct.

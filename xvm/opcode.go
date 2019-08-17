@@ -1,7 +1,7 @@
 // tokucore
 //
 // Copyright (c) 2013-2017 The btcsuite developers
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xvm

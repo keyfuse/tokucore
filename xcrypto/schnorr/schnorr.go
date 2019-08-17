@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018-2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package schnorr
@@ -13,7 +13,7 @@ import (
 	"crypto/elliptic"
 	"crypto/sha256"
 
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 // Sign -- signature with Schnorr, returning a 64 byte signature.

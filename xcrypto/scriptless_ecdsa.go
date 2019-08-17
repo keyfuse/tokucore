@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcrypto
@@ -9,8 +9,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/tokublock/tokucore/xcrypto/paillier"
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcrypto/paillier"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 // EcdsaAlice --

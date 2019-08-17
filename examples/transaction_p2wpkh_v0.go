@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package main
@@ -8,8 +8,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/tokublock/tokucore/xcore"
-	"github.com/tokublock/tokucore/xcore/bip32"
+	"github.com/keyfuse/tokucore/xcore"
+	"github.com/keyfuse/tokucore/xcore/bip32"
 )
 
 func assertNil(err error) {

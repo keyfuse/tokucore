@@ -1,7 +1,7 @@
 // tokucore
 //
 // Copyright (c) 2014 Coda Hale
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package ecdsa

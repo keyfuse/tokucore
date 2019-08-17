@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package bip32
@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/network"
+	"github.com/keyfuse/tokucore/network"
 )
 
 // TestBIP0032Vectors tests the vectors provided by [BIP32] to ensure the

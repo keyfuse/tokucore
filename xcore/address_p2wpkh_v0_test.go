@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xcore/bip32"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xcore/bip32"
 )
 
 func TestAddressP2WPKH(t *testing.T) {

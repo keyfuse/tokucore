@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xvm
@@ -13,8 +13,8 @@ import (
 
 	"encoding/hex"
 
-	"github.com/tokublock/tokucore/xbase"
-	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xcrypto"
 )
 
 // ScriptBuilder -- for building custom scripts

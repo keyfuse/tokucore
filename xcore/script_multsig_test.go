@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -10,9 +10,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xerror"
-	"github.com/tokublock/tokucore/xvm"
+	"github.com/keyfuse/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xerror"
+	"github.com/keyfuse/tokucore/xvm"
 )
 
 // TestMultiSigScript ensures the MultiSigScript function returns the expected

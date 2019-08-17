@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018-2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package schnorr
@@ -15,7 +15,7 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 var (

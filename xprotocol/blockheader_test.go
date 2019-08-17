@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xprotocol
@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xbase"
 )
 
 func TestBlockHeader(t *testing.T) {

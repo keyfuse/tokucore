@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -12,8 +12,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/tokublock/tokucore/xcore/bip32"
-	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xcore/bip32"
+	"github.com/keyfuse/tokucore/xcrypto"
 )
 
 // MockP2PKHCoin -- mock p2pkh coin for tests.

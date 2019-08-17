@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xvm
@@ -8,8 +8,8 @@ package xvm
 import (
 	"fmt"
 
-	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xerror"
+	"github.com/keyfuse/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xerror"
 )
 
 // Stack:

@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xprotocol
@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/tokublock/tokucore/network"
+	"github.com/keyfuse/tokucore/network"
 )
 
 func newMockNode(netwrk *network.Network, endpoint string) (*Connection, func()) {

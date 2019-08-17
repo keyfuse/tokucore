@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xvm
@@ -10,7 +10,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/tokublock/tokucore/xerror"
+	"github.com/keyfuse/tokucore/xerror"
 )
 
 // hexToBytes converts the passed hex string into bytes and will panic if there

@@ -1,12 +1,12 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
 
 import (
-	"github.com/tokublock/tokucore/xvm"
+	"github.com/keyfuse/tokucore/xvm"
 )
 
 // PayToWitnessV0PubKeyHashScript -- P2WPKH (version 0 pay-to-witness-public-key-hash).

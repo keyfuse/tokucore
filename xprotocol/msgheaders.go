@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xprotocol
@@ -8,7 +8,7 @@ package xprotocol
 import (
 	"fmt"
 
-	"github.com/tokublock/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xbase"
 )
 
 // MaxBlockHeadersPerMsg  -- the maximum number of block headers that can be in

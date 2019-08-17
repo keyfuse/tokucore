@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore

@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package main
@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xcrypto"
 )
 
 func assertNil(err error) {

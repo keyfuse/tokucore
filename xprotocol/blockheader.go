@@ -1,13 +1,13 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xprotocol
 
 import (
-	"github.com/tokublock/tokucore/xbase"
-	"github.com/tokublock/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xcrypto"
 )
 
 // BlockHeader defines information about a block and is used in the bitcoin

@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -8,9 +8,9 @@ package xcore
 import (
 	"strings"
 
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xbase"
-	"github.com/tokublock/tokucore/xerror"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xerror"
 )
 
 // Address -- an interface type for any type of destination a transaction.

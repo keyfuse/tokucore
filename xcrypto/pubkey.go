@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcrypto
@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 const (

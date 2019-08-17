@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcrypto
@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"math/big"
 
-	xecdsa "github.com/tokublock/tokucore/xcrypto/ecdsa"
+	xecdsa "github.com/keyfuse/tokucore/xcrypto/ecdsa"
 )
 
 // SignatureEcdsa -- a type representing an ECDSA signature.

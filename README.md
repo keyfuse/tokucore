@@ -1,6 +1,6 @@
 # tokucore – A Simple, Powerful Library for Bitcoin Apps.
 
-[![Build Status](https://travis-ci.org/tokublock/tokucore.png)](https://travis-ci.org/tokublock/tokucore) [![Go Report Card](https://goreportcard.com/badge/github.com/tokublock/tokucore)](https://goreportcard.com/report/github.com/tokublock/tokucore) [![codecov.io](https://codecov.io/gh/tokublock/tokucore/graphs/badge.svg)](https://codecov.io/gh/tokublock/tokucore/branch/master) [![BSD License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
+[![Build Status](https://travis-ci.org/keyfuse/tokucore.png)](https://travis-ci.org/keyfuse/tokucore) [![Go Report Card](https://goreportcard.com/badge/github.com/keyfuse/tokucore)](https://goreportcard.com/report/github.com/keyfuse/tokucore) [![codecov.io](https://codecov.io/gh/keyfuse/tokucore/graphs/badge.svg)](https://codecov.io/gh/keyfuse/tokucore/branch/master) [![BSD License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
 
 ## tokucore
@@ -30,8 +30,8 @@
 
 ```
 $ export GOPATH=`pwd`
-$ go get -u github.com/tokublock/tokucore/xcore
-$ cd src/github.com/tokublock/tokucore/
+$ go get -u github.com/keyfuse/tokucore/xcore
+$ cd src/github.com/keyfuse/tokucore/
 $ make test
 ```
 
@@ -74,7 +74,7 @@ $ go test -bench=BenchmarkMpc*  ./xcrypto
 
 goos: linux
 goarch: amd64
-pkg: github.com/tokublock/tokucore/xcrypto
+pkg: github.com/keyfuse/tokucore/xcrypto
 BenchmarkMpcEcdsaKeyGen-4      	    1000	   2133566 ns/op
 BenchmarkMpcEcdsaSigning-4     	       3	 426058258 ns/op
 BenchmarkMpcSchnorrKeyGen-4    	  100000	     11310 ns/op

@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018-2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -9,8 +9,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xvm"
+	"github.com/keyfuse/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xvm"
 )
 
 // PayToWitnessV0ScriptHashScript -- P2WSH (version 0 pay-to-witness-script-hash).

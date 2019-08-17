@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2019 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcrypto
@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/tokublock/tokucore/xcrypto/schnorr"
+	"github.com/keyfuse/tokucore/xcrypto/schnorr"
 )
 
 // SignatureSchnorr -- a type representing an schnorr signature.

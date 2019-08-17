@@ -1,12 +1,12 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
 
 import (
-	"github.com/tokublock/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xbase"
 )
 
 const (

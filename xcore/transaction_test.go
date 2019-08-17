@@ -1,6 +1,6 @@
 // tokucore
 //
-// Copyright (c) 2018 TokuBlock
+// Copyright 2019 by KeyFuse Labs
 // BSD License
 
 package xcore
@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/tokublock/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xbase"
 )
 
 // https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
