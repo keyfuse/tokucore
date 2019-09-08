@@ -49,10 +49,14 @@ func mockServerOnReceive(c *Connection, msg Message) {
 	switch msg.(type) {
 	case *MsgVersion:
 		rsp := NewMsgVersion(network.TestNet)
-		c.Send(rsp)
+		if err := c.Send(rsp); err != nil {
+			panic(err)
+		}
 	case *MsgVerAck:
 		rsp := NewMsgVerAck()
-		c.Send(rsp)
+		if err := c.Send(rsp); err != nil {
+			panic(err)
+		}
 	}
 }
 

@@ -9,8 +9,8 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/keyfuse/tokucore/xbase"
+	"github.com/stretchr/testify/assert"
 )
 
 // https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki
@@ -157,7 +157,8 @@ func TestTransactions(t *testing.T) {
 				redeem, err = hex.DecodeString(redeemHex)
 				assert.Nil(t, err)
 			}
-			tx.SetTxIn(i, uint64(amount), locking, redeem)
+			err = tx.SetTxIn(i, uint64(amount), locking, redeem)
+			assert.Nil(t, err)
 		}
 
 		// Debug.

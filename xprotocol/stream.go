@@ -63,7 +63,9 @@ func NewStream(conn net.Conn, magic []byte) *Stream {
 func (s *Stream) ReadMessage() (Message, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.conn.SetReadDeadline(time.Now().Add(readTimeout))
+	if err := s.conn.SetReadDeadline(time.Now().Add(readTimeout)); err != nil {
+		return nil, err
+	}
 
 	magic := make([]byte, 4)
 	if _, err := io.ReadFull(s.reader, magic); err != nil {
@@ -101,7 +103,9 @@ func (s *Stream) ReadMessage() (Message, error) {
 func (s *Stream) WriteMessage(msg Message) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+	if err := s.conn.SetWriteDeadline(time.Now().Add(writeTimeout)); err != nil {
+		return err
+	}
 
 	var b bytes.Buffer
 	b.Write(s.magic)
@@ -110,12 +114,16 @@ func (s *Stream) WriteMessage(msg Message) error {
 	b.Write(command)
 
 	datas := msg.Encode()
-	binary.Write(&b, binary.LittleEndian, uint32(len(datas)))
+	if err := binary.Write(&b, binary.LittleEndian, uint32(len(datas))); err != nil {
+		return err
+	}
 
 	b.Write(checksum(datas))
 	b.Write(datas)
 
-	s.writer.Write(b.Bytes())
+	if _, err := s.writer.Write(b.Bytes()); err != nil {
+		return err
+	}
 	return s.writer.Flush()
 }
 

@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/keyfuse/tokucore/network"
 	"github.com/keyfuse/tokucore/xcore/bip32"
 	"github.com/keyfuse/tokucore/xcrypto"
 	"github.com/keyfuse/tokucore/xerror"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTransactionBuilderP2PKH(t *testing.T) {
@@ -682,7 +682,8 @@ func TestTransactionBuilderTSSP2PKH(t *testing.T) {
 		sharesig := fs1
 
 		// EmbedIdxSignature.
-		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, SigHashAll)
+		err = tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, SigHashAll)
+		assert.Nil(t, err)
 		t.Logf("tx:%v", tx.ToString())
 
 		// Verify.
@@ -803,7 +804,8 @@ func TestTransactionBuilderTSSP2WPKH(t *testing.T) {
 		sharesig := fs1
 
 		// EmbedIdxSignature.
-		tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, SigHashAll)
+		err = tx.EmbedIdxEcdsaSignature(0, sharepub, sharesig, SigHashAll)
+		assert.Nil(t, err)
 		t.Logf("tx:%v", tx.ToString())
 
 		// Verify.

@@ -163,7 +163,9 @@ func testEcdsaFixture(f *ecdsaFixture, t *testing.T) {
 	t.Logf("Testing %s", f.name)
 
 	h := f.alg()
-	h.Write([]byte(f.message))
+	if _, err := h.Write([]byte(f.message)); err != nil {
+		panic(err)
+	}
 	digest := h.Sum(nil)
 
 	g := f.key.subgroup / 8
@@ -197,7 +199,9 @@ func testEcdsaFixture(f *ecdsaFixture, t *testing.T) {
 func BenchmarkSignP256(b *testing.B) {
 	f := fixtures[4]
 	h := f.alg()
-	h.Write([]byte(f.message))
+	if _, err := h.Write([]byte(f.message)); err != nil {
+		panic(err)
+	}
 	digest := h.Sum(nil)
 
 	g := f.key.subgroup / 8
@@ -217,7 +221,9 @@ func BenchmarkSignP256(b *testing.B) {
 func BenchmarkVerifyP256(b *testing.B) {
 	f := fixtures[4]
 	h := f.alg()
-	h.Write([]byte(f.message))
+	if _, err := h.Write([]byte(f.message)); err != nil {
+		panic(err)
+	}
 	digest := h.Sum(nil)
 
 	g := f.key.subgroup / 8

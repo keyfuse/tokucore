@@ -21,7 +21,9 @@ func mockServer(str string) *httptest.Server {
 			Result: (*json.RawMessage)(&data),
 		}
 		enc, _ := json.Marshal(resp)
-		w.Write(enc)
+		if _, err := w.Write(enc); err != nil {
+			panic(err)
+		}
 	}))
 }
 
@@ -32,7 +34,9 @@ func mockServerWithError(str string) *httptest.Server {
 			Error: &Error{Code: 88, Message: "mock.error"},
 		}
 		enc, _ := json.Marshal(resp)
-		w.Write(enc)
+		if _, err := w.Write(enc); err != nil {
+			panic(err)
+		}
 	}))
 }
 

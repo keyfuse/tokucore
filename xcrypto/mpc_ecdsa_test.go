@@ -114,6 +114,8 @@ func BenchmarkMpcEcdsaSigning(b *testing.B) {
 		sig2, _ := party2.Phase4(encpk1, encpub1, shareR2)
 
 		// Phase 5.
-		party1.Phase5(shareR1, sig2)
+		if _, err := party1.Phase5(shareR1, sig2); err != nil {
+			panic(err)
+		}
 	}
 }

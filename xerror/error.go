@@ -45,10 +45,16 @@ func (e *Error) Error() string {
 func (e *Error) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
-		io.WriteString(s, e.Message)
-		io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)", e.Num, e.State))
+		if _, err := io.WriteString(s, e.Message); err != nil {
+			return
+		}
+		if _, err := io.WriteString(s, fmt.Sprintf(" (errno %d) (state %s)", e.Num, e.State)); err != nil {
+			return
+		}
 		if s.Flag('+') {
-			io.WriteString(s, "\n"+e.stack.trace())
+			if _, err := io.WriteString(s, "\n"+e.stack.trace()); err != nil {
+				return
+			}
 		}
 	}
 }

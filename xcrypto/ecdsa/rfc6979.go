@@ -71,7 +71,9 @@ func NonceRFC6979(q, x *big.Int, hash []byte) *big.Int {
 // mac -- returns an HMAC of the given key and message
 func mac(alg func() hash.Hash, k, m, buf []byte) []byte {
 	h := hmac.New(alg, k)
-	h.Write(m)
+	if _, err := h.Write(m); err != nil {
+		panic(err)
+	}
 	return h.Sum(buf[:0])
 }
 

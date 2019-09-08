@@ -118,6 +118,8 @@ func BenchmarkMpcSchnorrSigning(b *testing.B) {
 		s2, _ := party2.Phase4(sharepub2, sharer2)
 
 		// Phase 5.
-		party1.Phase5(sharer1, s1, s2)
+		if _, err := party1.Phase5(sharer1, s1, s2); err != nil {
+			panic(err)
+		}
 	}
 }

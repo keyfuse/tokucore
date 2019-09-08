@@ -295,5 +295,6 @@ func TestHomomorphismAddMultDivTest(t *testing.T) {
 
 	want := big.NewInt(7)
 	got, err := sk.Decrypt(ct)
+	assert.Nil(t, err)
 	assert.Equal(t, want, got)
 }

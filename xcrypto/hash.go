@@ -14,7 +14,9 @@ import (
 )
 
 func calcHash(buf []byte, hasher hash.Hash) []byte {
-	hasher.Write(buf)
+	if _, err := hasher.Write(buf); err != nil {
+		panic(err)
+	}
 	return hasher.Sum(nil)
 }
 

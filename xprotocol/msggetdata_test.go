@@ -14,11 +14,12 @@ import (
 
 func TestMsgGetData(t *testing.T) {
 	want := NewMsgGetData()
-	want.AddInvVect(&InvVect{Type: InvTypeTx, Hash: bytes.Repeat([]byte{0x00}, 32)})
+	err := want.AddInvVect(&InvVect{Type: InvTypeTx, Hash: bytes.Repeat([]byte{0x00}, 32)})
+	assert.Nil(t, err)
 	encode := want.Encode()
 
 	got := NewMsgGetData()
-	err := got.Decode(encode)
+	err = got.Decode(encode)
 	assert.Nil(t, err)
 	assert.Equal(t, want, got)
 

@@ -80,6 +80,8 @@ func BenchmarkGetBlock(b *testing.B) {
 
 	client := NewClient(ts.URL[7:], "", "")
 	for n := 0; n < b.N; n++ {
-		client.GetBlock("000000000058b74204bb9d59128e7975b683ac73910660b6531e59523fb4a102")
+		if _, err := client.GetBlock("000000000058b74204bb9d59128e7975b683ac73910660b6531e59523fb4a102"); err != nil {
+			panic(err)
+		}
 	}
 }

@@ -44,7 +44,9 @@ func TestPaillier(t *testing.T) {
 func benchmarkKey(size int, b *testing.B) {
 	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
-		GenerateKeyPair(size)
+		if _, _, err := GenerateKeyPair(size); err != nil {
+			panic(err)
+		}
 	}
 }
 

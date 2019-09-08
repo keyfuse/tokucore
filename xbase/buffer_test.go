@@ -215,7 +215,11 @@ func BenchmarkBuffer(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		writer.ReadVarInt()
-		writer.ReadVarBytes()
+		if _, err := writer.ReadVarInt(); err != nil {
+			panic(err)
+		}
+		if _, err := writer.ReadVarBytes(); err != nil {
+			panic(err)
+		}
 	}
 }

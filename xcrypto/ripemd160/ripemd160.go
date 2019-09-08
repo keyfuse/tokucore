@@ -87,9 +87,13 @@ func (d *digest) Sum(in []byte) []byte {
 	var tmp [64]byte
 	tmp[0] = 0x80
 	if tc%64 < 56 {
-		d0.Write(tmp[0 : 56-tc%64])
+		if _, err := d0.Write(tmp[0 : 56-tc%64]); err != nil {
+			panic(err)
+		}
 	} else {
-		d0.Write(tmp[0 : 64+56-tc%64])
+		if _, err := d0.Write(tmp[0 : 64+56-tc%64]); err != nil {
+			panic(err)
+		}
 	}
 
 	// Length in bits.
@@ -97,7 +101,9 @@ func (d *digest) Sum(in []byte) []byte {
 	for i := uint(0); i < 8; i++ {
 		tmp[i] = byte(tc >> (8 * i))
 	}
-	d0.Write(tmp[0:8])
+	if _, err := d0.Write(tmp[0:8]); err != nil {
+		panic(err)
+	}
 
 	if d0.nx != 0 {
 		panic("d.nx != 0")

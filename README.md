@@ -1,6 +1,6 @@
 # tokucore – A Simple, Powerful Library for Bitcoin Apps.
 
-[![Build Status](https://travis-ci.org/keyfuse/tokucore.png)](https://travis-ci.org/keyfuse/tokucore) [![Go Report Card](https://goreportcard.com/badge/github.com/keyfuse/tokucore)](https://goreportcard.com/report/github.com/keyfuse/tokucore) [![codecov.io](https://codecov.io/gh/keyfuse/tokucore/graphs/badge.svg)](https://codecov.io/gh/keyfuse/tokucore/branch/master) [![BSD License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
+[![Build Status](https://travis-ci.org/keyfuse/tokucore.png)](https://travis-ci.org/keyfuse/tokucore) [![GolangCI](https://golangci.com/badges/github.com/keyfuse/tokucore.svg)](https://golangci.com/r/github.com/keyfuse/tokucore) [![Go Report Card](https://goreportcard.com/badge/github.com/keyfuse/tokucore)](https://goreportcard.com/report/github.com/keyfuse/tokucore) [![codecov.io](https://codecov.io/gh/keyfuse/tokucore/graphs/badge.svg)](https://codecov.io/gh/keyfuse/tokucore/branch/master) [![BSD License](http://img.shields.io/badge/license-BSD-blue.svg?style=flat)](LICENSE) <img src="http://segwit.co/static/public/images/logo.png" width="100">
 
 
 ## tokucore

@@ -35,11 +35,17 @@ func TestVectors(t *testing.T) {
 		md := New()
 		for j := 0; j < 3; j++ {
 			if j < 2 {
-				io.WriteString(md, tv.in)
+				if _, err := io.WriteString(md, tv.in); err != nil {
+					t.Fatalf("%v", err)
+				}
 			} else {
-				io.WriteString(md, tv.in[0:len(tv.in)/2])
+				if _, err := io.WriteString(md, tv.in[0:len(tv.in)/2]); err != nil {
+					panic(err)
+				}
 				md.Sum(nil)
-				io.WriteString(md, tv.in[len(tv.in)/2:])
+				if _, err := io.WriteString(md, tv.in[len(tv.in)/2:]); err != nil {
+					t.Fatalf("%v", err)
+				}
 			}
 			s := fmt.Sprintf("%x", md.Sum(nil))
 			if s != tv.out {
@@ -53,7 +59,9 @@ func TestVectors(t *testing.T) {
 func millionA() string {
 	md := New()
 	for i := 0; i < 100000; i++ {
-		io.WriteString(md, "aaaaaaaaaa")
+		if _, err := io.WriteString(md, "aaaaaaaaaa"); err != nil {
+			panic(err)
+		}
 	}
 	return fmt.Sprintf("%x", md.Sum(nil))
 }

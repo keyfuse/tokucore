@@ -38,12 +38,16 @@ func Key(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
 		// for each block T_i = U_1 ^ U_2 ^ ... ^ U_iter
 		// U_1 = PRF(password, salt || uint(i))
 		prf.Reset()
-		prf.Write(salt)
+		if _, err := prf.Write(salt); err != nil {
+			panic(err)
+		}
 		buf[0] = byte(block >> 24)
 		buf[1] = byte(block >> 16)
 		buf[2] = byte(block >> 8)
 		buf[3] = byte(block)
-		prf.Write(buf[:4])
+		if _, err := prf.Write(buf[:4]); err != nil {
+			panic(err)
+		}
 		dk = prf.Sum(dk)
 		T := dk[len(dk)-hashLen:]
 		copy(U, T)
@@ -51,7 +55,9 @@ func Key(password, salt []byte, iter, keyLen int, h func() hash.Hash) []byte {
 		// U_n = PRF(password, U_(n-1))
 		for n := 2; n <= iter; n++ {
 			prf.Reset()
-			prf.Write(U)
+			if _, err := prf.Write(U); err != nil {
+				panic(err)
+			}
 			U = U[:0]
 			U = prf.Sum(U)
 			for x := range U {

@@ -34,7 +34,9 @@ func (m *MsgGetHeaders) AddBlockLocatorHash(hash []byte) error {
 func (m *MsgGetHeaders) Encode() []byte {
 	if len(m.blockLocatorHashes) == 0 {
 		var zero [32]byte
-		m.AddBlockLocatorHash(zero[:])
+		if err := m.AddBlockLocatorHash(zero[:]); err != nil {
+			return nil
+		}
 	}
 
 	buffer := xbase.NewBuffer()
@@ -64,7 +66,9 @@ func (m *MsgGetHeaders) Decode(data []byte) error {
 		if hash, err = buffer.ReadBytes(32); err != nil {
 			return err
 		}
-		m.AddBlockLocatorHash(hash)
+		if err := m.AddBlockLocatorHash(hash); err != nil {
+			return err
+		}
 	}
 	return nil
 }
